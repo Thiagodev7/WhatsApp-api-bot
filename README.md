@@ -134,6 +134,34 @@ Testa se o bot está online.
 
 ---
 
+## ⚙️ Como o Agendamento Usa o `respostas.json`
+
+O arquivo `respostas.json` é a **única fonte de verdade** do sistema.  
+Tanto a IA quanto o fluxo de agendamento consultam este arquivo para saber **preços, descrições e duração dos serviços**.
+
+O **`messageHandler.js`** é responsável por interpretar o tempo de cada serviço — ele **lê o texto diretamente** do `respostas.json` e usa uma **expressão regular** para encontrar o tempo (em minutos).  
+
+> 💡 A IA **não analisa o texto** para calcular o tempo — quem faz isso é o código, de forma confiável e automatizada.
+
+### ✅ Regras importantes para funcionar
+
+Para o agendamento calcular corretamente a duração, **o texto salvo precisa mencionar o tempo em minutos** de forma clara.  
+Segue o padrão recomendado:
+
+| Exemplo válido | Motivo |
+|-----------------|---------|
+| `!adicionar corte masculino = Custa R$60 e leva 40 minutos.` | Contém “40 minutos” |
+| `!adicionar progressiva = Custa R$300 e dura 180 min.` | Contém “180 min” |
+| `!adicionar hidratacao = O tratamento leva 120 minutos.` | Contém número e unidade |
+
+### ❌ Exemplo inválido
+```
+!adicionar corte = Demora cerca de uma hora.
+```
+> O código **não entende expressões como “uma hora”** — use sempre números inteiros em minutos.
+
+---
+
 ## 💡 Exemplo de Uso
 
 > Cliente: “Quero agendar um corte amanhã às 15h.”  
