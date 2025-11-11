@@ -1,7 +1,7 @@
 {
   "name": "whatsapp-ia-bot",
   "version": "1.0.0",
-  "description": "Bot de WhatsApp integrado com IA (OpenAI)",
+  "description": "Bot de WhatsApp integrado com IA (Google Gemini)",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js"

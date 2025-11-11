@@ -95,7 +95,6 @@ async function getAuthClient() {
 async function createAppointment({ summary, description, startDateTime, endDateTime }) {
   const auth = await getAuthClient();
   const calendar = google.calendar({ version: 'v3', auth });
-
   const event = {
     summary,
     description,

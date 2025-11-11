@@ -1,0 +1,28 @@
+{
+  "273396143235156@lid": [
+    {
+      "role": "user",
+      "content": "Vamos marcar um novo horário"
+    },
+    {
+      "role": "assistant",
+      "content": "Claro! Vou verificar a agenda para você. Qual o seu nome?"
+    },
+    {
+      "role": "user",
+      "content": "Bom dia"
+    },
+    {
+      "role": "assistant",
+      "content": "Bom dia! Em que posso ajudar você hoje? 😊"
+    },
+    {
+      "role": "user",
+      "content": "Bom dia, tudo bem com você?"
+    },
+    {
+      "role": "assistant",
+      "content": "Bom dia! Tudo bem, obrigada por perguntar! 😊 Em que posso ajudar você hoje?"
+    }
+  ]
+}
