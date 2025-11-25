@@ -71,7 +71,7 @@ function main() {
   console.log('🚀 Iniciando servidor...');
   startWhatsappBot();
 
-  const PORT = process.env.PORT || 3000;
+  const PORT = process.env.PORT || 80;
   server.listen(PORT, () => {
     console.log(`📡 Painel de Controle: http://SEU_IP_DA_VPS:${PORT}`);
   });
