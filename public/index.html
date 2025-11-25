@@ -3,160 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Central de Comando - Bot Zap IA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <title>THIAGO.AI - Central de Controle</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@400;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #02040a;
+            --glass: rgba(10, 20, 30, 0.9);
+            --border: rgba(56, 189, 248, 0.4);
+            --primary: #38bdf8; 
+            --secondary: #818cf8;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --text: #f0f9ff;
+            --spy-color: #00ffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
         body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #0f0f1a;
-            color: #00ff41;
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--bg-color);
+            color: var(--text);
+            min-height: 100vh;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
-            margin: 0;
             overflow: hidden;
-            background-image: 
-                radial-gradient(circle at 50% 50%, #1a1a2e 0%, #000000 100%);
+            background: radial-gradient(circle at 20% 20%, #0c1525 0%, #000 100%);
         }
 
-        /* Efeito de linhas Matrix no fundo */
-        body::before {
-            content: "";
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 255, 0, 0.05) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 2px, 3px 100%;
-            pointer-events: none;
-            z-index: -1;
+        body::after {
+            content: " "; display: block; position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 2; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.4;
         }
 
-        .container {
-            text-align: center;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 2rem;
-            border: 2px solid #00ff41;
-            border-radius: 15px;
-            box-shadow: 0 0 20px #00ff41, inset 0 0 20px rgba(0, 255, 65, 0.2);
-            max-width: 450px;
-            width: 90%;
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 2.5rem;
+            border-radius: 16px;
+            box-shadow: 0 0 50px rgba(56, 189, 248, 0.1);
+            max-width: 1200px;
+            width: 95%;
             position: relative;
+            z-index: 1;
+            backdrop-filter: blur(10px);
+        }
+
+        .control-panel {
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; border-right: 1px dashed var(--border);
+            padding-right: 2rem;
         }
 
         h1 {
-            font-family: 'Press Start 2P', cursive; /* Fonte retrô pixelada */
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
-            line-height: 1.5;
-            color: #fff;
-            text-shadow: 2px 2px #ff00de;
-        }
-
-        p {
-            color: #ccc;
-            margin-bottom: 1.5rem;
-        }
-
-        .qr-box {
-            background: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            display: inline-block;
-            position: relative;
-            min-height: 260px;
-            min-width: 260px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Animação de loading cyberpunk */
-        .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #00ff41;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        img {
-            max-width: 100%;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        #status {
-            margin-top: 20px;
-            font-weight: bold;
-            font-family: 'Courier New', Courier, monospace;
-            text-transform: uppercase;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem;
+            color: var(--text); text-shadow: 0 0 15px var(--primary);
             letter-spacing: 2px;
         }
 
-        .credit {
-            margin-top: 30px;
-            font-size: 0.8rem;
-            opacity: 0.7;
-            font-family: 'Courier New', monospace;
+        .subtitle { color: var(--primary); font-size: 0.7rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 4px; }
+
+        .qr-frame {
+            position: relative; padding: 5px; background: rgba(0,0,0,0.5);
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+            min-height: 220px; min-width: 220px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 4px; margin-bottom: 20px;
+        }
+        .qr-frame img { max-width: 100%; }
+
+        .btn-action {
+            padding: 12px; width: 100%; margin-top: 10px;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--primary); border: 1px solid var(--primary);
+            text-transform: uppercase; font-weight: bold; cursor: pointer;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
+            transition: 0.3s; letter-spacing: 1px;
+        }
+        .btn-action:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); }
+        .btn-danger { color: var(--danger); border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+        .btn-danger:hover { background: var(--danger); color: #fff; box-shadow: 0 0 15px var(--danger); }
+
+        .log-panel {
+            background: #050505; border: 1px solid #333; padding: 1.5rem;
+            display: flex; flex-direction: column;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
+            height: 500px; box-shadow: inset 0 0 30px rgba(0,0,0,0.9); border-radius: 8px;
         }
 
-        .credit span {
-            color: #ff00de;
-            font-weight: bold;
+        .log-header {
+            border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; color: #666; font-size: 0.8rem;
         }
 
-        /* Botão de Autodestruição (Logout) */
-        .btn-logout {
-            margin-top: 25px;
-            padding: 15px 30px;
-            background-color: #ff0000;
-            color: #fff;
-            font-family: 'Press Start 2P', cursive;
-            font-size: 0.7rem;
-            border: 2px solid #fff;
-            border-radius: 5px;
-            cursor: pointer;
-            text-transform: uppercase;
-            box-shadow: 4px 4px 0px #800000;
-            transition: transform 0.1s, box-shadow 0.1s;
-            display: none; /* Escondido por padrão */
+        .log-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 10px; margin-bottom: 10px; }
+        .log-line { word-break: break-all; line-height: 1.4; }
+        
+        .cmd-line { display: flex; align-items: center; border-top: 1px solid #333; padding-top: 10px; }
+        .cmd-input { background: transparent; border: none; color: #fff; width: 100%; outline: none; font-size: 1rem; font-family: 'JetBrains Mono', monospace; }
+
+        /* === MODAL DE BANCO DE DADOS === */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); z-index: 100;
+            display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
         }
 
-        .btn-logout:active {
-            transform: translate(2px, 2px);
-            box-shadow: 2px 2px 0px #800000;
+        .modal-window {
+            background: #0a0f18; border: 1px solid var(--secondary);
+            width: 90%; max-width: 700px; height: 85vh;
+            border-radius: 12px; display: flex; flex-direction: column;
+            box-shadow: 0 0 50px rgba(129, 140, 248, 0.3);
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .modal-header {
+            padding: 15px; border-bottom: 1px solid var(--secondary);
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(129, 140, 248, 0.1);
+        }
+
+        .modal-body { flex: 1; padding: 20px; overflow-y: auto; }
+
+        /* Atalhos de Configuração */
+        .shortcuts {
+            display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
+            padding-bottom: 20px; border-bottom: 1px dashed #333;
+        }
+        .tag {
+            padding: 6px 12px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;
+            font-family: 'Inter', sans-serif; font-weight: 600; border: 1px solid #333;
+            transition: 0.2s; color: #ccc; background: #111;
+        }
+        .tag:hover { transform: translateY(-2px); color: #fff; border-color: var(--primary); }
+        .tag.system { border-color: var(--secondary); color: var(--secondary); }
+        .tag.security { border-color: var(--danger); color: var(--danger); }
+
+        .db-list { display: flex; flex-direction: column; gap: 10px; }
+        .db-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255, 255, 255, 0.05); padding: 10px;
+            border: 1px solid #333; border-radius: 6px;
+        }
+        .db-key { color: var(--secondary); font-weight: bold; font-family: 'JetBrains Mono'; font-size: 0.85rem; }
+        .db-val { color: #888; font-size: 0.8rem; margin-left: 15px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: sans-serif; }
+
+        .btn-icon { background: none; border: none; cursor: pointer; color: #555; transition: 0.2s; font-size: 1.1rem; }
+        .btn-icon:hover { color: var(--danger); transform: scale(1.1); }
+
+        .modal-footer {
+            padding: 15px; border-top: 1px solid #333;
+            background: #050505;
+            display: flex; flex-direction: column; gap: 10px;
         }
         
-        .blink {
-            animation: blinker 1s linear infinite;
+        .input-group { display: flex; gap: 10px; }
+        .input-dark {
+            background: #111; border: 1px solid #444; color: #fff;
+            padding: 12px; border-radius: 6px; font-family: 'Inter', sans-serif;
+            outline: none; font-size: 0.9rem;
         }
-        @keyframes blinker { 50% { opacity: 0; } }
+        .input-dark:focus { border-color: var(--secondary); }
+        
+        /* Highlight especial para configs */
+        .is-config { border-left: 3px solid var(--secondary); }
 
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @media (max-width: 900px) { .dashboard { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>🤖 CENTRAL DE COMANDO DA IA SUPREMA</h1>
-        
-        <p id="instruction">Iniciando protocolos de dominação mundial...<br>(e gerando QR Code)</p>
-        
-        <div id="qrcode-container" class="qr-box">
-            <div class="loader"></div>
+    <div class="dashboard">
+        <div class="control-panel">
+            <h1 data-text="THIAGO.AI">THIAGO.AI</h1>
+            <p class="subtitle" id="main-status">SYSTEM INITIALIZED</p>
+
+            <div class="qr-frame" id="qrcode-container">
+                <div style="color:var(--primary)">...</div>
+            </div>
+
+            <div style="width: 100%; display: flex; flex-direction: column; gap: 10px;">
+                <button class="btn-action" onclick="requestAuth()">🔒 GERENCIAR SISTEMA</button>
+                <button class="btn-action btn-danger" onclick="logout()">[ DESLIGAR ]</button>
+            </div>
         </div>
 
-        <p id="status" class="blink">AGUARDANDO SINAL...</p>
+        <div class="log-panel">
+            <div class="log-header">
+                <span>ROOT@THIAGOLS_SERVER:~# TAIL -F LOGS</span>
+                <span>STATUS: ONLINE</span>
+            </div>
+            <div class="log-content" id="log-container"></div>
+            <div class="cmd-line">
+                <span style="color:var(--primary); margin-right:10px;">thiago@admin:~$</span>
+                <input type="text" class="cmd-input" id="cmd-input" placeholder="Digite help..." autocomplete="off">
+            </div>
+        </div>
+    </div>
 
-        <button id="btn-logout" class="btn-logout" onclick="logout()">
-            ☢️ EJETAR SESSÃO ☢️
-        </button>
+    <div class="modal-overlay" id="db-modal">
+        <div class="modal-window">
+            <div class="modal-header">
+                <span style="color:var(--secondary); font-weight:bold;">// KNOWLEDGE_BASE_EDITOR</span>
+                <button class="btn-icon" onclick="closeDatabase()">✖</button>
+            </div>
+            
+            <div class="modal-body">
+                <div style="font-size:0.75rem; color:#666; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Configuração Rápida (Clique para editar)</div>
+                <div class="shortcuts">
+                    <div class="tag system" onclick="fillConfig('config_prompt', 'Cole aqui o texto de personalidade da IA...')">🤖 Personalidade da IA</div>
+                    <div class="tag security" onclick="fillConfig('config_numeros', '556299..., 551198...')">🚫 Números Permitidos</div>
+                    <div class="tag security" onclick="fillConfig('config_limite_msg', '200')">📉 Limite Mensagens</div>
+                    <div class="tag" onclick="fillConfig('corte masculino', 'R$ 50,00 - 40 min')">✂️ Adicionar Serviço</div>
+                </div>
 
-        <div class="credit">
-            Architecture by <br> <span>THIAGO THE GENIUS 🧠✨</span>
+                <div class="db-list" id="db-list-container">
+                    <div style="text-align:center; color:#555; margin-top:20px;">Carregando dados...</div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <div class="input-group">
+                    <input type="text" id="new-key" class="input-dark" placeholder="Gatilho (ex: config_prompt)" style="flex:1;">
+                </div>
+                <div class="input-group">
+                    <input type="text" id="new-val" class="input-dark" placeholder="Valor / Resposta da IA" style="flex:3;">
+                    <button class="btn-action" style="width: auto; margin:0;" onclick="addItem()">SALVAR</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -164,35 +248,120 @@
     <script>
         const socket = io();
         const qrContainer = document.getElementById('qrcode-container');
-        const statusText = document.getElementById('status');
-        const instruction = document.getElementById('instruction');
-        const btnLogout = document.getElementById('btn-logout');
+        const logContainer = document.getElementById('log-container');
+        const dbModal = document.getElementById('db-modal');
+        const dbList = document.getElementById('db-list-container');
+        const inputKey = document.getElementById('new-key');
+        const inputVal = document.getElementById('new-val');
 
-        socket.on('qr', (src) => {
-            qrContainer.innerHTML = `<img src="${src}" alt="QR Code">`;
-            instruction.innerHTML = "⚠️ ATENÇÃO HUMANO ⚠️<br>Escaneie rápido antes que eu mude de ideia.";
-            statusText.innerText = "🟡 ESCANEIE AGORA";
-            statusText.style.color = "#ffff00";
-            statusText.classList.add('blink');
-            btnLogout.style.display = 'none';
+        function log(msg, type='info') {
+            const div = document.createElement('div');
+            div.className = 'log-line';
+            const time = new Date().toLocaleTimeString('pt-BR');
+            let color = 'var(--text)';
+            if(type === 'warn') color = '#facc15';
+            if(type === 'error') color = '#ef4444';
+            if(type === 'thiago') color = '#c084fc';
+            if(type === 'spy') { color = 'var(--spy-color)'; msg = `📡 ${msg}`; }
+
+            div.innerHTML = `<span style="color:var(--primary)">[${time}]</span> <span style="color:${color}">${msg}</span>`;
+            logContainer.appendChild(div);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+
+        // --- FUNÇÕES UX (Facilitadores) ---
+        function fillConfig(key, placeholder) {
+            inputKey.value = key;
+            inputVal.placeholder = placeholder;
+            inputVal.value = '';
+            inputVal.focus();
+        }
+
+        function requestAuth() {
+            const pwd = prompt("🔑 SENHA DE ADMINISTRADOR:");
+            if(pwd) socket.emit('auth_request', pwd);
+        }
+
+        socket.on('auth_success', () => {
+            log("ACESSO ADMIN CONCEDIDO.", "success");
+            openDatabase();
         });
 
-        socket.on('ready', () => {
-            qrContainer.innerHTML = `<div style="font-size: 80px;">👽</div>`;
-            instruction.innerHTML = "Acesso concedido.<br>A IA está monitorando tudo.";
-            statusText.innerText = "🟢 SISTEMA OPERACIONAL";
-            statusText.style.color = "#00ff41";
-            statusText.classList.remove('blink');
-            btnLogout.style.display = 'inline-block';
+        socket.on('auth_fail', () => {
+            log("ACESSO NEGADO.", "error");
+            alert("⛔ SENHA INCORRETA");
         });
 
-        function logout() {
-            if (confirm("⚠️ ALERTA DE SEGURANÇA ⚠️\n\nTem certeza que deseja desconectar? A IA vai ficar triste (e brava).\n\nO sistema irá reiniciar.")) {
-                statusText.innerText = "🔴 INICIANDO AUTO-DESTRUIÇÃO...";
-                statusText.classList.add('blink');
-                socket.emit('logout');
+        function openDatabase() {
+            dbModal.style.display = 'flex';
+            socket.emit('request_knowledge'); 
+        }
+
+        function closeDatabase() { dbModal.style.display = 'none'; }
+
+        function renderDatabase(data) {
+            dbList.innerHTML = '';
+            const keys = Object.keys(data).sort(); // Ordena alfabético
+            
+            if(keys.length === 0) {
+                dbList.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">Banco de dados vazio.</div>';
+                return;
+            }
+
+            keys.forEach(key => {
+                const item = document.createElement('div');
+                // Destaca configurações de sistema
+                const isConfig = key.startsWith('config_') ? 'is-config' : '';
+                item.className = `db-item ${isConfig}`;
+                
+                item.innerHTML = `
+                    <div style="overflow:hidden; width:100%;">
+                        <span class="db-key">${key}</span>
+                        <div class="db-val">${data[key]}</div>
+                    </div>
+                    <button class="btn-icon" onclick="deleteItem('${key}')">🗑️</button>
+                `;
+                // Ao clicar no item, preenche os campos para edição
+                item.onclick = (e) => {
+                    if(e.target.tagName !== 'BUTTON') {
+                        inputKey.value = key;
+                        inputVal.value = data[key];
+                    }
+                };
+                dbList.appendChild(item);
+            });
+        }
+
+        function addItem() {
+            const key = inputKey.value.trim().toLowerCase();
+            const value = inputVal.value.trim();
+            if(!key || !value) { alert("Preencha os campos!"); return; }
+            
+            socket.emit('add_knowledge', { key, value });
+            log(`Salvando: [${key}]`, 'thiago');
+            // Não limpa, para facilitar ajustes
+        }
+
+        function deleteItem(key) {
+            if(confirm(`Apagar "${key}" permanentemente?`)) {
+                socket.emit('delete_knowledge', key);
             }
         }
+
+        socket.on('knowledge_update', (data) => renderDatabase(data));
+        socket.on('qr', (src) => { qrContainer.innerHTML = `<img src="${src}" alt="QR Code">`; });
+        socket.on('ready', () => { qrContainer.innerHTML = `<div style="font-size: 60px; animation: pulse 2s infinite;">🧠</div>`; log("Sistema Conectado.", "thiago"); });
+        socket.on('real_log', (data) => { log(data.text, 'spy'); });
+
+        document.getElementById('cmd-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const cmd = this.value; this.value = '';
+                log(`thiago@admin:~$ ${cmd}`);
+                if(cmd === 'clear') logContainer.innerHTML = '';
+            }
+        });
+
+        function logout() { if(confirm("Desligar o sistema?")) socket.emit('logout'); }
     </script>
 </body>
 </html>
