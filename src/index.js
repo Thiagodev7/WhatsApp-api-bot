@@ -13,19 +13,22 @@ const io = new Server(server);
 let client = null;
 let isClientReady = false;
 
+// ESSA LINHA É A MÁGICA: Ela manda carregar os arquivos da pasta 'public'
 app.use(express.static('public'));
 
-// Função para iniciar (ou reiniciar) o bot
+// Rota de fallback caso não ache o index.html (opcional, mas bom pra debug)
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/../public/index.html');
+});
+
 function startWhatsappBot() {
     if (client) {
-        // Se já existir cliente, remove listeners antigos para não duplicar
         client.removeAllListeners();
     }
     
-    // Cria o cliente e passa o IO para enviar o QR Code
+    // Passa o IO para enviar o QR Code
     client = createWhatsappClient(handleIncomingMessage, io);
 
-    // Monitora quando estiver pronto para avisar quem entrar no site depois
     client.on('ready', () => {
         isClientReady = true;
     });
@@ -36,32 +39,19 @@ function startWhatsappBot() {
 }
 
 io.on('connection', (socket) => {
-    console.log('🌐 Novo acesso ao painel web');
+    console.log('🌐 Painel Web conectado');
 
-    // Se o bot já estiver conectado quando a pessoa abrir o site, avisa ela
     if (isClientReady) {
         socket.emit('ready');
     }
 
-    // OUVINTE DO BOTÃO DESCONECTAR
     socket.on('logout', async () => {
-        console.log('🔴 Solicitação de logout recebida pelo painel web');
+        console.log('🔴 Logout solicitado via web');
         if (client) {
-            try {
-                await client.logout(); // Sai do WhatsApp Web
-                console.log('Sessão encerrada com sucesso.');
-            } catch (err) {
-                console.error('Erro ao tentar deslogar (talvez já desconectado):', err.message);
-            }
-
-            try {
-                await client.destroy(); // Fecha o navegador do bot
-            } catch (err) { }
-            
+            try { await client.logout(); } catch (e) {}
+            try { await client.destroy(); } catch (e) {}
             isClientReady = false;
-            
-            // Reinicia o processo para gerar novo QR Code imediatamente
-            console.log('🔄 Reiniciando bot para novo pareamento...');
+            console.log('🔄 Reiniciando bot...');
             startWhatsappBot();
         }
     });
@@ -73,7 +63,7 @@ function main() {
 
   const PORT = process.env.PORT || 3000;
   server.listen(PORT, () => {
-    console.log(`📡 Painel de Controle: http://SEU_IP_DA_VPS:${PORT}`);
+    console.log(`📡 Servidor rodando na porta ${PORT}`);
   });
 }
 
