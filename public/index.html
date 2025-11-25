@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Comando - Bot Zap IA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #0f0f1a;
+            color: #00ff41;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 50%, #1a1a2e 0%, #000000 100%);
+        }
+
+        /* Efeito de linhas Matrix no fundo */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 255, 0, 0.05) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border: 2px solid #00ff41;
+            border-radius: 15px;
+            box-shadow: 0 0 20px #00ff41, inset 0 0 20px rgba(0, 255, 65, 0.2);
+            max-width: 450px;
+            width: 90%;
+            position: relative;
+        }
+
+        h1 {
+            font-family: 'Press Start 2P', cursive; /* Fonte retrô pixelada */
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+            color: #fff;
+            text-shadow: 2px 2px #ff00de;
+        }
+
+        p {
+            color: #ccc;
+            margin-bottom: 1.5rem;
+        }
+
+        .qr-box {
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            display: inline-block;
+            position: relative;
+            min-height: 260px;
+            min-width: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Animação de loading cyberpunk */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #00ff41;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        img {
+            max-width: 100%;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .credit {
+            margin-top: 30px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            font-family: 'Courier New', monospace;
+        }
+
+        .credit span {
+            color: #ff00de;
+            font-weight: bold;
+        }
+
+        /* Botão de Autodestruição (Logout) */
+        .btn-logout {
+            margin-top: 25px;
+            padding: 15px 30px;
+            background-color: #ff0000;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 0.7rem;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            box-shadow: 4px 4px 0px #800000;
+            transition: transform 0.1s, box-shadow 0.1s;
+            display: none; /* Escondido por padrão */
+        }
+
+        .btn-logout:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px #800000;
+        }
+        
+        .blink {
+            animation: blinker 1s linear infinite;
+        }
+        @keyframes blinker { 50% { opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🤖 CENTRAL DE COMANDO DA IA SUPREMA</h1>
+        
+        <p id="instruction">Iniciando protocolos de dominação mundial...<br>(e gerando QR Code)</p>
+        
+        <div id="qrcode-container" class="qr-box">
+            <div class="loader"></div>
+        </div>
+
+        <p id="status" class="blink">AGUARDANDO SINAL...</p>
+
+        <button id="btn-logout" class="btn-logout" onclick="logout()">
+            ☢️ EJETAR SESSÃO ☢️
+        </button>
+
+        <div class="credit">
+            Architecture by <br> <span>THIAGO THE GENIUS 🧠✨</span>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const qrContainer = document.getElementById('qrcode-container');
+        const statusText = document.getElementById('status');
+        const instruction = document.getElementById('instruction');
+        const btnLogout = document.getElementById('btn-logout');
+
+        socket.on('qr', (src) => {
+            qrContainer.innerHTML = `<img src="${src}" alt="QR Code">`;
+            instruction.innerHTML = "⚠️ ATENÇÃO HUMANO ⚠️<br>Escaneie rápido antes que eu mude de ideia.";
+            statusText.innerText = "🟡 ESCANEIE AGORA";
+            statusText.style.color = "#ffff00";
+            statusText.classList.add('blink');
+            btnLogout.style.display = 'none';
+        });
+
+        socket.on('ready', () => {
+            qrContainer.innerHTML = `<div style="font-size: 80px;">👽</div>`;
+            instruction.innerHTML = "Acesso concedido.<br>A IA está monitorando tudo.";
+            statusText.innerText = "🟢 SISTEMA OPERACIONAL";
+            statusText.style.color = "#00ff41";
+            statusText.classList.remove('blink');
+            btnLogout.style.display = 'inline-block';
+        });
+
+        function logout() {
+            if (confirm("⚠️ ALERTA DE SEGURANÇA ⚠️\n\nTem certeza que deseja desconectar? A IA vai ficar triste (e brava).\n\nO sistema irá reiniciar.")) {
+                statusText.innerText = "🔴 INICIANDO AUTO-DESTRUIÇÃO...";
+                statusText.classList.add('blink');
+                socket.emit('logout');
+            }
+        }
+    </script>
+</body>
+</html>

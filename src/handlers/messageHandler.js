@@ -115,7 +115,7 @@ async function handleIncomingMessage(client, message) {
   const text = (message.body || '').trim();
   if (!text) return;
 
-  const phone = from.replace('@c.us', '');
+  const phone = from.replace('@c.us', ''); 
 
   // loga mensagem recebida
   logMessage('RECEBIDO', from, text);
@@ -130,8 +130,98 @@ async function handleIncomingMessage(client, message) {
 
   const norm = normalize(text);
   let state = getState(from);
+  
+  // ================== 1. COMANDOS ADMIN (PRIORIDADE MÁXIMA) ==================
+  if (norm.startsWith('!')) {
+    if (norm === '!ping') {
+      await replyAndLog(
+        message,
+        '🏓 pong! — A *IA*, criada pelo gênio Thiago 🧠✨, está viva, operante e provavelmente mais inteligente que o Google hoje 😎'
+      );
+      return;
+    }
 
-  // ================== 1. FLUXO DE AGENDAMENTO (EM ANDAMENTO) ==================
+    if (norm.startsWith('!listar')) {
+      const lista = listRespostas();
+      if (lista.length === 0) {
+        await replyAndLog(
+          message,
+          '🤔 A *IA* (orgulhosamente criada pelo gênio Thiago 🧠) ainda não sabe de nada! Use o comando:\n\n!adicionar nome = texto da informação\n\npra ensinar essa criatura brilhante 🤖'
+        );
+      } else {
+        const textList = lista.map((r, i) => `${i + 1}. ${r}`).join('\n');
+        await replyAndLog(
+          message,
+          `📚 *Banco de sabedoria da IA (criada pelo gênio Thiago 🧠):*\n\n${textList}\n\n💡 Essas informações ficam guardadas no cérebro cibernético dela e são usadas pra responder com estilo! 😎`
+        );
+      }
+      return;
+    }
+
+    if (norm.startsWith('!adicionar ')) {
+      const raw = text.substring('!adicionar'.length).trim();
+      const parts = raw.split('=');
+      if (parts.length < 2) {
+        await replyAndLog(
+          message,
+          '⚙️ Formato inválido!\nUse: !adicionar chave = texto da informação\n\nExemplo:\n!adicionar corte masculino = R$60 e leva 40 minutos 💇‍♂️'
+        );
+        return;
+      }
+
+      const chave = parts[0].trim();
+      const info = parts.slice(1).join('=').trim();
+
+      if (!chave || !info) {
+        await replyAndLog(
+          message,
+          '⚙️ Faltou alguma coisa aí! Use: !adicionar chave = texto da informação'
+        );
+        return;
+      }
+
+      addResposta(chave, info);
+      await replyAndLog(
+        message,
+        `✅ Informação adicionada com sucesso ao incrível cérebro da *IA*, uma criação magistral do gênio Thiago 🧠💫\n\n🧩 *Chave:* ${chave}\n📖 *Conteúdo:* ${info}\n\nAgora ela sabe mais do que nunca! 🤖🔥`
+      );
+      return;
+    }
+
+    if (norm.startsWith('!remover ')) {
+      const chave = text.substring('!remover'.length).trim();
+      if (!chave) {
+        await replyAndLog(
+          message,
+          '⚠️ Esqueceu de dizer o que quer apagar, meu caro humano! 😅\nExemplo: !remover corte masculino'
+        );
+        return;
+      }
+
+      removeResposta(chave);
+      await replyAndLog(
+        message,
+        `🗑️ A *IA* (criada pelo lendário Thiago 🧞‍♂️) esqueceu a informação sobre *${chave}*.\n\nMas cuidado... dizem que ela nunca perdoa quem apaga o que ela sabia 😏`
+      );
+      return;
+    }
+    
+    // Se for um comando desconhecido, avisa o admin
+    await replyAndLog(
+      message,
+      `Comando "${text}" não reconhecido, chefe! 🤷‍♂️\n\nUse: !adicionar, !remover, !listar ou !ping.`
+    );
+    return;
+  }
+  
+  // ================== 2. COMANDO DE CANCELAMENTO ==================
+  if (state && (norm === 'cancelar' || norm === 'sair')) {
+    deleteState(from);
+    await replyAndLog(message, 'Agendamento cancelado. Se precisar de algo mais, é só chamar! 👍');
+    return;
+  }
+
+  // ================== 3. FLUXO DE AGENDAMENTO (EM ANDAMENTO) ==================
   if (state) {
     // 1) pegando nome
     if (state.step === 'ask_name') {
@@ -140,7 +230,7 @@ async function handleIncomingMessage(client, message) {
       setState(from, state);
       await replyAndLog(
         message,
-        `Perfeito, ${state.name}! ✂️\nQual serviço você deseja fazer? (ex: corte masculino, corte feminino, barba, hidratação, tintura, progressiva...)`
+        `Perfeito, ${state.name}! ✂️\nQual serviço você deseja fazer? (ex: corte masculino, corte feminino, barba, hidratação, tintura, progressiva...)\n\n(Ou digite "cancelar" para sair.)`
       );
       return;
     }
@@ -150,38 +240,32 @@ async function handleIncomingMessage(client, message) {
       state.service = text;
       state.step = 'ask_date';
 
-      // ---- INÍCIO DA NOVA LÓGICA DE DURAÇÃO ----
+      // ---- LÓGICA DE DURAÇÃO ----
       const normService = normalize(text);
       const respostas = getRespostas(); 
-
       let duration = DEFAULT_DURATION; 
       let foundDuration = false;
-
       const foundKey = Object.keys(respostas).find(key => normService.includes(key));
       
       if (foundKey) {
         const info = respostas[foundKey]; 
-        
         const match = info.match(/(\d+)\s*(min|minutos)/i); 
-        
         if (match && match[1]) {
           duration = parseInt(match[1], 10);
           foundDuration = true;
         }
       }
-
       if (!foundDuration) {
           console.log(`[AVISO] Não foi encontrada duração no respostas.json para "${normService}". Usando padrão de ${DEFAULT_DURATION} min.`);
       }
-
       state.duration = duration; 
       console.log(`[INFO] Serviço: "${state.service}", Duração definida: ${duration} min`);
-      // ---- FIM DA NOVA LÓGICA DE DURAÇÃO ----
+      // ---- FIM DA LÓGICA DE DURAÇÃO ----
 
       setState(from, state);
       await replyAndLog(
         message,
-        `Ótimo! Para qual dia você prefere o atendimento, ${state.name}? Pode ser "hoje", "amanhã" ou uma data no formato 12/11.`
+        `Ótimo! Para qual dia você prefere o atendimento, ${state.name}? Pode ser "hoje", "amanhã" ou uma data no formato 12/11.\n\n(Ou digite "cancelar" para sair.)`
       );
       return;
     }
@@ -192,12 +276,38 @@ async function handleIncomingMessage(client, message) {
       if (!parsed) {
         await replyAndLog(
           message,
-          'Não consegui entender a data 😕\nMe envie como "hoje", "amanhã" ou no formato 12/11.'
+          'Não consegui entender a data 😕\nMe envie como "hoje", "amanhã" ou no formato 12/11.\n\n(Ou digite "cancelar" para sair.)'
         );
         return;
       }
 
       const dateObj = parsed.date;
+
+      // --- MUDANÇA DE LÓGICA: NOVO BLOCO DE VERIFICAÇÃO DE REGRAS ---
+      const respostas = getRespostas();
+      const diaDaSemana = dateObj.getDay(); // 0 = Domingo, 6 = Sábado
+      
+      // Procura por regras que bloqueiam o agendamento
+      const regraFimDeSemanaKey = Object.keys(respostas).find(k => k.includes('fim de semana') || k.includes('dia e horario'));
+      const regraAgendamentoGeralKey = Object.keys(respostas).find(k => k.includes('agendamento'));
+
+      // Regra 1: É fim de semana E existe uma regra sobre fim de semana?
+      if ((diaDaSemana === 0 || diaDaSemana === 6) && regraFimDeSemanaKey) {
+          const respostaRegra = respostas[regraFimDeSemanaKey]; // Ex: "não aceite agendamentos no fim de semana"
+          console.log(`[AGENDAMENTO BLOQUEADO] Motivo: Fim de semana (regra: ${regraFimDeSemanaKey})`);
+          await replyAndLog(message, respostaRegra + "\n\nPor favor, escolha outro dia.");
+          return; // Bloqueia o agendamento
+      }
+      
+      // Regra 2: Existe uma regra geral de bloqueio de agendamento? (ex: "estou na roça")
+      if (regraAgendamentoGeralKey && (normalize(respostas[regraAgendamentoGeralKey]).includes('nao') || normalize(respostas[regraAgendamentoGeralKey]).includes('não'))) {
+          const respostaRegra = respostas[regraAgendamentoGeralKey]; // Ex: "na aceite nenhum agendamento, estou na roça"
+          console.log(`[AGENDAMENTO BLOQUEADO] Motivo: Regra geral (regra: ${regraAgendamentoGeralKey})`);
+          await replyAndLog(message, respostaRegra);
+          return; // Bloqueia o agendamento
+      }
+      // --- FIM DO NOVO BLOCO ---
+      
       const iso = formatDateYMD(dateObj);
       const br = formatDateBR(dateObj);
 
@@ -213,7 +323,7 @@ async function handleIncomingMessage(client, message) {
         if (!slots.length) {
           await replyAndLog(
             message,
-            `No dia ${br} o Gabriel está sem horários disponíveis para "${state.service}" (duração de ${durationInMinutes} min) 😕\nSe quiser, me envie outra data.`
+            `No dia ${br} o Gabriel está sem horários disponíveis para "${state.service}" (duração de ${durationInMinutes} min) 😕\nSe quiser, me envie outra data.\n\n(Ou digite "cancelar" para sair.)`
           );
           return;
         }
@@ -227,7 +337,7 @@ async function handleIncomingMessage(client, message) {
         const slotsStr = slots.join(', ');
         await replyAndLog(
           message,
-          `No dia ${br}, tenho estes horários livres (${durationInMinutes} min) com o Gabriel:\n\n${slotsStr}\n\nMe responde só com o horário desejado (ex: 15:00).`
+          `No dia ${br}, tenho estes horários livres (${durationInMinutes} min) com o Gabriel:\n\n${slotsStr}\n\nMe responde só com o horário desejado (ex: 15:00).\n\n(Ou digite "cancelar" para sair.)`
         );
       } catch (err) {
         console.error('Erro ao buscar horários disponíveis:', err);
@@ -243,18 +353,27 @@ async function handleIncomingMessage(client, message) {
     if (state.step === 'ask_time') {
       const chosen = text.trim();
       const slots = state.slots || [];
-      if (!slots.includes(chosen)) {
+      
+      const chosenSlot = slots.find(slot => {
+        const normalizedSlot = slot.replace(':', '');
+        const normalizedChosen = chosen.replace(':', '');
+        return normalizedSlot === normalizedChosen;
+      }) || slots.find(slot => slot === chosen); 
+      
+      if (!chosenSlot) {
         await replyAndLog(
           message,
-          `Não encontrei esse horário na lista 😕\nEscolha um dos horários disponíveis: ${slots.join(', ')}`
+          `Não encontrei o horário "${chosen}" na lista 😕\nEscolha um dos horários disponíveis: ${slots.join(', ')}\n\n(Ou digite "cancelar" para sair.)`
         );
         return;
       }
+      
+      const slotTime = chosenSlot; 
 
       const dateIso = state.dateIso;
       
       // --- CORREÇÃO DE FUSO HORÁRIO ---
-      const startDateTime = `${dateIso}T${chosen}:00-03:00`;
+      const startDateTime = `${dateIso}T${slotTime}:00-03:00`;
       const start = new Date(startDateTime); 
       const durationInMinutes = state.duration || DEFAULT_DURATION; 
       const end = new Date(start.getTime()); 
@@ -270,7 +389,7 @@ async function handleIncomingMessage(client, message) {
       // --- FIM DA CORREÇÃO ---
 
       const summary = `${state.service} - ${state.name} (${durationInMinutes} min)`;
-      const description = `Agendamento via WhatsApp para ${state.name}. Serviço: ${state.service}. Horário: ${state.dateBr} às ${chosen}. Duração: ${durationInMinutes} min.`;
+      const description = `Agendamento via WhatsApp para ${state.name} (Tel: ${state.phone}).\nServiço: ${state.service}.\nHorário: ${state.dateBr} às ${slotTime}.\nDuração: ${durationInMinutes} min.`;
 
       try {
         await createAppointment({
@@ -282,7 +401,7 @@ async function handleIncomingMessage(client, message) {
 
         await replyAndLog(
           message,
-          `✅ Prontinho, ${state.name}!\nSeu horário para *${state.service}* foi marcado para *${state.dateBr} às ${chosen}* com o Gabriel Santos.\n\nTe esperamos no salão! 💇‍♂️✨`
+          `✅ Prontinho, ${state.name}!\nSeu horário para *${state.service}* foi marcado para *${state.dateBr} às ${slotTime}* com o Gabriel Santos.\n\nTe esperamos no salão! 💇‍♂️✨`
         );
         deleteState(from); // Termina o fluxo
       } catch (err) {
@@ -297,102 +416,12 @@ async function handleIncomingMessage(client, message) {
     }
   }
 
-  // ================== 2. INÍCIO DE UM NOVO FLUXO DE AGENDAMENTO ==================
-  const bookingTriggers = [
-    'agendar', 'agendamento', 
-    'marcar horario', 'marcar hora', 'marcar corte', 
-    'quero um horario', 'quero horario', 
-    'horarios disponiveis', 'quais horarios', 'que horas tem',
-    'tem horario', 'tem vaga', 'tem agenda', 'ver agenda', 'verificar agenda',
-    'pode agendar'
-  ];
-
-  if (bookingTriggers.some(trigger => norm.includes(trigger))) {
-    const newState = { step: 'ask_name' };
-    setState(from, newState);
-
-    await replyAndLog(
-      message,
-      'Perfeito! Vamos verificar a agenda do Gabriel Santos 💇‍♂️\nPrimeiro, me diga seu nome:'
-    );
-    return;
-  }
-
-  // ================== 3. COMANDOS ADMIN DE RESPOSTAS PRONTAS ==================
-  if (norm === '!ping') {
-    await replyAndLog(
-      message,
-      '🏓 pong! — A *IA*, criada pelo gênio Thiago 🧠✨, está viva, operante e provavelmente mais inteligente que o Google hoje 😎'
-    );
-    return;
-  }
-
-  if (norm.startsWith('!listar')) {
-    const lista = listRespostas();
-    if (lista.length === 0) {
-      await replyAndLog(
-        message,
-        '🤔 A *IA* (orgulhosamente criada pelo gênio Thiago 🧠) ainda não sabe de nada! Use o comando:\n\n!adicionar nome = texto da informação\n\npra ensinar essa criatura brilhante 🤖'
-      );
-    } else {
-      const textList = lista.map((r, i) => `${i + 1}. ${r}`).join('\n');
-      await replyAndLog(
-        message,
-        `📚 *Banco de sabedoria da IA (criada pelo gênio Thiago 🧠):*\n\n${textList}\n\n💡 Essas informações ficam guardadas no cérebro cibernético dela e são usadas pra responder com estilo! 😎`
-      );
-    }
-    return;
-  }
-
-  if (norm.startsWith('!adicionar ')) {
-    const raw = text.substring('!adicionar'.length).trim();
-    const parts = raw.split('=');
-    if (parts.length < 2) {
-      await replyAndLog(
-        message,
-        '⚙️ Formato inválido!\nUse: !adicionar chave = texto da informação\n\nExemplo:\n!adicionar corte masculino = R$60 e leva 40 minutos 💇‍♂️'
-      );
-      return;
-    }
-
-    const chave = parts[0].trim();
-    const info = parts.slice(1).join('=').trim();
-
-    if (!chave || !info) {
-      await replyAndLog(
-        message,
-        '⚙️ Faltou alguma coisa aí! Use: !adicionar chave = texto da informação'
-      );
-      return;
-    }
-
-    addResposta(chave, info);
-    await replyAndLog(
-      message,
-      `✅ Informação adicionada com sucesso ao incrível cérebro da *IA*, uma criação magistral do gênio Thiago 🧠💫\n\n🧩 *Chave:* ${chave}\n📖 *Conteúdo:* ${info}\n\nAgora ela sabe mais do que nunca! 🤖🔥`
-    );
-    return;
-  }
-
-  if (norm.startsWith('!remover ')) {
-    const chave = text.substring('!remover'.length).trim();
-    if (!chave) {
-      await replyAndLog(
-        message,
-        '⚠️ Esqueceu de dizer o que quer apagar, meu caro humano! 😅\nExemplo: !remover corte masculino'
-      );
-      return;
-    }
-
-    removeResposta(chave);
-    await replyAndLog(
-      message,
-      `🗑️ A *IA* (criada pelo lendário Thiago 🧞‍♂️) esqueceu a informação sobre *${chave}*.\n\nMas cuidado... dizem que ela nunca perdoa quem apaga o que ela sabia 😏`
-    );
-    return;
-  }
-
-  // ================== 4. CONVERSA NORMAL (IA) COM CONTEXTO EXTRA ==================
+  // ================== 4. INÍCIO DE NOVO AGENDAMENTO (REMOVIDO) ==================
+  // A IA agora é responsável por iniciar o fluxo.
+  
+  // ================== 5. CONVERSA NORMAL (IA) COM CONTEXTO EXTRA ==================
+  // Só chega aqui se não for um comando admin E não estiver num fluxo de agendamento
+  
   resetUsageIfNewDay();
 
   const newChars = text.length;
@@ -421,18 +450,19 @@ async function handleIncomingMessage(client, message) {
     .map(([key, val]) => `• ${key}: ${val}`)
     .join('\n');
 
+  // --- MUDANÇA DE LÓGICA: PROMPT DA IA MELHORADO ---
   const contexto = `
 Você é a secretária virtual do cabeleireiro Gabriel Santos.
 Sua principal função é responder perguntas sobre os serviços, usando as informações abaixo.
-Se alguma informação não estiver nas listas, responda com educação dizendo que vai repassar a dúvida para o Gabriel.
-
-IMPORTANTE: Você NÃO deve tentar agendar ou verificar horários.
-Se o usuário perguntar sobre "agendar", "marcar", "horários" ou "vagas", responda APENAS:
-"Claro! Vou verificar a agenda para você. Qual o seu nome?"
-(Isso irá ativar o sistema de agendamento).
 
 Informações cadastradas:
 ${infosTexto || 'Nenhuma informação adicional cadastrada ainda.'}
+
+REGRAS IMPORTANTES:
+1.  Se a pergunta do usuário for sobre um tópico nas "Informações cadastradas" (ex: "fim de semana", "agendamento", "folga"), VOCÊ DEVE usar essa informação para responder.
+2.  SOMENTE SE o usuário perguntar sobre "agendar", "marcar", "horários" OU "vagas" E NÃO HOUVER UMA REGRA de bloqueio (como 'estou na roça' ou 'fim de semana'), responda APENAS:
+"Claro! Vou verificar a agenda para você. Qual o seu nome?"
+3.  Se não souber responder, diga que vai perguntar ao Gabriel.
 `;
 
   // injeta o contexto como primeira mensagem da "assistente"
@@ -454,34 +484,22 @@ ${infosTexto || 'Nenhuma informação adicional cadastrada ainda.'}
       `💬 Resposta enviada. Uso hoje: mensagens=${usage.messages}, chars=${usage.chars}`
     );
     
-    if (normalize(reply).includes('verificar a agenda')) {
-      const newState = { step: 'ask_name' };
+    // Se a IA deu a resposta para iniciar o agendamento...
+    if (normalize(reply).includes('qual o seu nome')) {
+      // ...nós criamos o estado por baixo dos panos.
+      const newState = { step: 'ask_name', phone: phone };
       setState(from, newState);
     }
     
     await replyAndLog(message, reply);
 
   } catch (err) {
-    // ---- INÍCIO DA MODIFICAÇÃO ----
-    console.error('Erro IA:', err); // Loga o erro completo para ti
-
-    // Verifica se é o erro 429 (Too Many Requests)
-    if (err.status === 429) {
-      await replyAndLog(
-        message,
-        'Ufa! 😅 Minha cabeça está a mil agora, recebi muitas mensagens ao mesmo tempo.\n\nPor favor, pode me perguntar de novo daqui a um minutinho?'
-      );
-    } else {
-      // Para qualquer outro erro (ex: 500, falha de rede, etc.)
-      await replyAndLog(
-        message,
-        '⚠️ Ops! Tive um probleminha técnico para processar sua resposta. Tente novamente em alguns instantes.'
-      );
-    }
-    // ---- FIM DA MODIFICAÇÃO ----
-  }
-}
-
-module.exports = {
-  handleIncomingMessage,
-};
+    console.error('Erro ao gerar resposta da IA:', err);
+    await replyAndLog(
+      message,
+      '⚠️ Tive um problema ao tentar responder sua mensagem. Tente novamente em alguns instantes.'
+    );
+  }}
+  module.exports = {
+    handleIncomingMessage,
+  };
