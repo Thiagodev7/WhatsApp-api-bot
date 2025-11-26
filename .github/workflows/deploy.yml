@@ -1,0 +1,35 @@
+name: Deploy Automático VPS
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    name: Deploy para Produção
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Executando comandos SSH na VPS
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: 22
+        script: |
+          # 1. Entra na pasta do projeto (ajuste se o nome for diferente)
+          cd ~/whatsapp-api-bot
+          
+          # 2. Força a atualização do código (descarta mudanças locais para evitar conflito)
+          git fetch --all
+          git reset --hard origin/main
+          
+          # 3. Instala dependências novas (caso tenha)
+          npm install
+          
+          # 4. Reinicia o Bot e salva
+          pm2 restart bot-zap
+          pm2 save
+          
+          echo "🚀 Deploy concluído com sucesso!"
