@@ -2,25 +2,29 @@
 const fs = require('fs');
 const path = require('path');
 
-// Arquivo onde vamos salvar o histórico
-const LOG_PATH = path.join(process.cwd(), 'conversas.log');
+// Caminho do arquivo de log na raiz do projeto
+const LOG_FILE = path.join(process.cwd(), 'conversas.log');
 
-/**
- * Registra uma linha de log no arquivo conversas.log
- * @param {"RECEBIDO"|"RESPONDIDO"} type
- * @param {string} from - número do WhatsApp (ex: 5562...@c.us)
- * @param {string} text - mensagem
- */
-function logMessage(type, from, text) {
-  const timestamp = new Date().toISOString(); // 2025-11-11T18:23:45.123Z
-  const cleanText = String(text).replace(/\s+/g, ' ').trim(); // tira quebras de linha
-  const line = `[${timestamp}] [${type}] ${from}: ${cleanText}\n`;
+function logMessage(type, contact, content) {
+  const date = new Date().toISOString().replace('T', ' ').substring(0, 19);
+  
+  // Formata a linha: [DATA] [TIPO] [CONTATO] MENSAGEM
+  const logLine = `[${date}] [${type}] [${contact}]: ${content}\n`;
 
-  fs.appendFile(LOG_PATH, line, (err) => {
-    if (err) {
-      console.error('Erro ao gravar log de conversa:', err);
-    }
+  // Escreve no arquivo (cria se não existir)
+  fs.appendFile(LOG_FILE, logLine, (err) => {
+    if (err) console.error('Erro ao salvar log:', err);
   });
 }
 
-module.exports = { logMessage };
+// Função genérica para logar qualquer coisa
+function logSystem(msg, type = 'INFO') {
+    const date = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    const logLine = `[${date}] [${type}] SYSTEM: ${msg}\n`;
+    
+    fs.appendFile(LOG_FILE, logLine, (err) => {
+        if (err) console.error('Erro ao salvar log:', err);
+    });
+}
+
+module.exports = { logMessage, logSystem, LOG_FILE };

@@ -3,365 +3,502 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>THIAGO.AI - Central de Controle</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@400;700;900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <title>Thiago.AI | Gestão Inteligente</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
     <style>
         :root {
-            --bg-color: #02040a;
-            --glass: rgba(10, 20, 30, 0.9);
-            --border: rgba(56, 189, 248, 0.4);
-            --primary: #38bdf8; 
-            --secondary: #818cf8;
+            /* Paleta de Cores Premium */
+            --primary: #4f46e5; /* Indigo Vibrante */
+            --primary-light: #e0e7ff;
+            --secondary: #10b981; /* Verde Sucesso */
             --danger: #ef4444;
-            --success: #22c55e;
-            --text: #f0f9ff;
-            --spy-color: #00ffff;
+            --warning: #f59e0b;
+            --surface: #ffffff;
+            --background: #f3f4f6;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            
+            /* Chat Colors */
+            --chat-bg: #f0f2f5;
+            --bubble-me: #4f46e5;
+            --bubble-me-text: #ffffff;
+            --bubble-them: #ffffff;
+            --bubble-them-text: #1f2937;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: 'JetBrains Mono', monospace;
-            background-color: var(--bg-color);
-            color: var(--text);
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            height: 100vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
             overflow: hidden;
-            background: radial-gradient(circle at 20% 20%, #0c1525 0%, #000 100%);
         }
 
-        body::after {
-            content: " "; display: block; position: absolute;
-            top: 0; left: 0; bottom: 0; right: 0;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            z-index: 2; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.4;
-        }
-
-        .dashboard {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr;
-            gap: 2rem;
-            background: var(--glass);
-            border: 1px solid var(--border);
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 0 50px rgba(56, 189, 248, 0.1);
-            max-width: 1200px;
-            width: 95%;
-            position: relative;
-            z-index: 1;
-            backdrop-filter: blur(10px);
-        }
-
-        .control-panel {
-            display: flex; flex-direction: column; align-items: center;
-            text-align: center; border-right: 1px dashed var(--border);
-            padding-right: 2rem;
-        }
-
-        h1 {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2.5rem; font-weight: 900; margin-bottom: 0.5rem;
-            color: var(--text); text-shadow: 0 0 15px var(--primary);
-            letter-spacing: 2px;
-        }
-
-        .subtitle { color: var(--primary); font-size: 0.7rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 4px; }
-
-        .qr-frame {
-            position: relative; padding: 5px; background: rgba(0,0,0,0.5);
-            border: 2px solid var(--primary);
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
-            min-height: 220px; min-width: 220px;
-            display: flex; align-items: center; justify-content: center;
-            border-radius: 4px; margin-bottom: 20px;
-        }
-        .qr-frame img { max-width: 100%; }
-
-        .btn-action {
-            padding: 12px; width: 100%; margin-top: 10px;
-            background: rgba(56, 189, 248, 0.1);
-            color: var(--primary); border: 1px solid var(--primary);
-            text-transform: uppercase; font-weight: bold; cursor: pointer;
-            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem;
-            transition: 0.3s; letter-spacing: 1px;
-        }
-        .btn-action:hover { background: var(--primary); color: #000; box-shadow: 0 0 15px var(--primary); }
-        .btn-danger { color: var(--danger); border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
-        .btn-danger:hover { background: var(--danger); color: #fff; box-shadow: 0 0 15px var(--danger); }
-
-        .log-panel {
-            background: #050505; border: 1px solid #333; padding: 1.5rem;
+        /* === SIDEBAR PREMIUM === */
+        .sidebar {
+            width: 280px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
             display: flex; flex-direction: column;
-            font-family: 'JetBrains Mono', monospace; font-size: 0.9rem;
-            height: 500px; box-shadow: inset 0 0 30px rgba(0,0,0,0.9); border-radius: 8px;
+            padding: 24px;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.02);
+            z-index: 10;
         }
 
-        .log-header {
-            border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;
-            display: flex; justify-content: space-between; color: #666; font-size: 0.8rem;
+        .brand {
+            display: flex; align-items: center; gap: 12px;
+            margin-bottom: 40px; padding-left: 12px;
         }
+        .brand-icon {
+            width: 40px; height: 40px; background: var(--primary);
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
+            color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        .brand-text h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; }
+        .brand-text p { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
 
-        .log-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 10px; margin-bottom: 10px; }
-        .log-line { word-break: break-all; line-height: 1.4; }
+        .nav-menu { display: flex; flex-direction: column; gap: 8px; }
         
-        .cmd-line { display: flex; align-items: center; border-top: 1px solid #333; padding-top: 10px; }
-        .cmd-input { background: transparent; border: none; color: #fff; width: 100%; outline: none; font-size: 1rem; font-family: 'JetBrains Mono', monospace; }
+        .nav-item {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 16px; border-radius: 12px;
+            color: var(--text-muted); text-decoration: none;
+            font-weight: 500; font-size: 0.9rem; transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .nav-item:hover { background: var(--background); color: var(--primary); transform: translateX(4px); }
+        .nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+        .nav-item.danger { margin-top: auto; color: var(--danger); }
+        .nav-item.danger:hover { background: #fee2e2; }
 
-        /* === MODAL DE BANCO DE DADOS === */
-        .modal-overlay {
+        /* === MAIN AREA === */
+        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+
+        /* Header Flutuante */
+        .header {
+            height: 80px; padding: 0 40px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .status-pill {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 16px; border-radius: 30px;
+            background: white; border: 1px solid var(--border);
+            font-size: 0.85rem; font-weight: 600;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted); transition: 0.3s; }
+        .dot.online { background: var(--secondary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); animation: pulse 2s infinite; }
+        .dot.offline { background: var(--danger); }
+
+        /* Dashboard Grid */
+        .workspace {
+            padding: 30px 40px; overflow-y: auto; flex: 1;
+            display: grid; grid-template-columns: 380px 1fr; gap: 30px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--surface); border-radius: 24px;
+            padding: 30px; border: 1px solid var(--border);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+            display: flex; flex-direction: column; height: 100%; transition: transform 0.2s;
+        }
+        .card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+
+        /* QR Section */
+        .qr-container {
+            flex: 1; display: flex; flex-direction: column; 
+            align-items: center; justify-content: center; text-align: center;
+        }
+        .qr-box {
+            background: white; padding: 15px; border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin: 20px 0;
+            border: 1px solid var(--border); width: 240px; height: 240px;
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .qr-img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; }
+        .scan-line {
+            position: absolute; width: 100%; height: 2px; background: var(--primary);
+            top: 0; animation: scan 2s infinite linear; opacity: 0.6;
+        }
+
+        .btn-primary {
+            background: var(--primary); color: white;
+            border: none; padding: 14px 28px; border-radius: 14px;
+            font-weight: 600; font-size: 0.95rem; cursor: pointer;
+            width: 100%; transition: 0.2s; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35); }
+        .btn-primary:active { transform: translateY(0); }
+
+        /* Chat Moderno */
+        .chat-window {
+            background: var(--chat-bg); border-radius: 24px;
+            border: 1px solid var(--border); overflow: hidden;
+            display: flex; flex-direction: column; position: relative;
+        }
+        .chat-feed {
+            flex: 1; padding: 25px; overflow-y: auto;
+            display: flex; flex-direction: column; gap: 16px;
+        }
+        
+        .bubble {
+            max-width: 75%; padding: 12px 18px; border-radius: 18px;
+            font-size: 0.95rem; line-height: 1.5; position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .bubble.incoming {
+            background: var(--bubble-them); color: var(--bubble-them-text);
+            align-self: flex-start; border-bottom-left-radius: 4px;
+        }
+        .bubble.outgoing {
+            background: var(--bubble-me); color: var(--bubble-me-text);
+            align-self: flex-end; border-bottom-right-radius: 4px;
+        }
+        .bubble.system {
+            align-self: center; background: rgba(0,0,0,0.05); color: var(--text-muted);
+            font-size: 0.8rem; padding: 6px 16px; border-radius: 50px; margin: 10px 0;
+            box-shadow: none; border: 1px solid rgba(0,0,0,0.05);
+        }
+        .bubble .meta {
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.7rem; margin-bottom: 4px; opacity: 0.8; font-weight: 600;
+        }
+        .bubble .time { font-size: 0.65rem; margin-left: 10px; opacity: 0.6; font-weight: normal; }
+
+        /* Modal Bonito */
+        .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8); z-index: 100;
-            display: none; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px);
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
+            display: none; align-items: center; justify-content: center; z-index: 100;
+            animation: fadeIn 0.2s;
         }
-
-        .modal-window {
-            background: #0a0f18; border: 1px solid var(--secondary);
-            width: 90%; max-width: 700px; height: 85vh;
-            border-radius: 12px; display: flex; flex-direction: column;
-            box-shadow: 0 0 50px rgba(129, 140, 248, 0.3);
-            animation: slideUp 0.3s ease-out;
+        .modal-card {
+            background: var(--surface); width: 550px; max-width: 90%;
+            border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden; animation: slideUp 0.3s;
         }
-
-        .modal-header {
-            padding: 15px; border-bottom: 1px solid var(--secondary);
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(129, 140, 248, 0.1);
-        }
-
-        .modal-body { flex: 1; padding: 20px; overflow-y: auto; }
-
-        /* Atalhos de Configuração */
-        .shortcuts {
-            display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;
-            padding-bottom: 20px; border-bottom: 1px dashed #333;
-        }
-        .tag {
-            padding: 6px 12px; border-radius: 4px; font-size: 0.75rem; cursor: pointer;
-            font-family: 'Inter', sans-serif; font-weight: 600; border: 1px solid #333;
-            transition: 0.2s; color: #ccc; background: #111;
-        }
-        .tag:hover { transform: translateY(-2px); color: #fff; border-color: var(--primary); }
-        .tag.system { border-color: var(--secondary); color: var(--secondary); }
-        .tag.security { border-color: var(--danger); color: var(--danger); }
-
-        .db-list { display: flex; flex-direction: column; gap: 10px; }
-        .db-item {
-            display: flex; justify-content: space-between; align-items: center;
-            background: rgba(255, 255, 255, 0.05); padding: 10px;
-            border: 1px solid #333; border-radius: 6px;
-        }
-        .db-key { color: var(--secondary); font-weight: bold; font-family: 'JetBrains Mono'; font-size: 0.85rem; }
-        .db-val { color: #888; font-size: 0.8rem; margin-left: 15px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: sans-serif; }
-
-        .btn-icon { background: none; border: none; cursor: pointer; color: #555; transition: 0.2s; font-size: 1.1rem; }
-        .btn-icon:hover { color: var(--danger); transform: scale(1.1); }
-
-        .modal-footer {
-            padding: 15px; border-top: 1px solid #333;
-            background: #050505;
-            display: flex; flex-direction: column; gap: 10px;
-        }
+        .modal-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 24px; max-height: 60vh; overflow-y: auto; }
         
-        .input-group { display: flex; gap: 10px; }
-        .input-dark {
-            background: #111; border: 1px solid #444; color: #fff;
-            padding: 12px; border-radius: 6px; font-family: 'Inter', sans-serif;
-            outline: none; font-size: 0.9rem;
-        }
-        .input-dark:focus { border-color: var(--secondary); }
-        
-        /* Highlight especial para configs */
-        .is-config { border-left: 3px solid var(--secondary); }
+        .input-group { margin-bottom: 20px; }
+        .label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
+        .input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; transition: 0.2s; font-family: inherit; }
+        .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
 
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @media (max-width: 900px) { .dashboard { grid-template-columns: 1fr; } }
+        .config-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 16px; background: var(--background); border-radius: 12px;
+            margin-bottom: 10px; border: 1px solid transparent; transition: 0.2s;
+        }
+        .config-item:hover { border-color: var(--border); background: white; }
+
+        /* Toast */
+        .toast {
+            position: fixed; top: 24px; right: 24px;
+            background: white; padding: 16px 24px; border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex; align-items: center; gap: 12px;
+            transform: translateX(150%); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-left: 4px solid var(--success); font-weight: 500; z-index: 200;
+        }
+        .toast.show { transform: translateX(0); }
+
+        /* Animações */
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        @keyframes scan { 0% { top: 0; opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Mobile */
+        @media (max-width: 900px) {
+            .sidebar { position: fixed; bottom: 0; width: 100%; height: 70px; flex-direction: row; justify-content: space-around; padding: 0; border-top: 1px solid var(--border); border-right: none; }
+            .brand { display: none; }
+            .nav-menu { flex-direction: row; width: 100%; justify-content: space-around; }
+            .nav-item { flex-direction: column; padding: 8px; font-size: 0.7rem; gap: 4px; border-radius: 8px; }
+            .nav-item span { display: block; }
+            .nav-item.danger { margin-top: 0; }
+            .workspace { grid-template-columns: 1fr; padding: 20px; padding-bottom: 90px; }
+            .header { padding: 0 20px; }
+            .card { padding: 20px; }
+            .qr-container { min-height: 300px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="dashboard">
-        <div class="control-panel">
-            <h1 data-text="THIAGO.AI">THIAGO.AI</h1>
-            <p class="subtitle" id="main-status">SYSTEM INITIALIZED</p>
-
-            <div class="qr-frame" id="qrcode-container">
-                <div style="color:var(--primary)">...</div>
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">
+                <span class="material-icons-round">smart_toy</span>
             </div>
-
-            <div style="width: 100%; display: flex; flex-direction: column; gap: 10px;">
-                <button class="btn-action" onclick="requestAuth()">🔒 GERENCIAR SISTEMA</button>
-                <button class="btn-action btn-danger" onclick="logout()">[ DESLIGAR ]</button>
+            <div class="brand-text">
+                <h1>Thiago.AI</h1>
+                <p>Painel Admin v9.0</p>
             </div>
         </div>
 
-        <div class="log-panel">
-            <div class="log-header">
-                <span>ROOT@THIAGOLS_SERVER:~# TAIL -F LOGS</span>
-                <span>STATUS: ONLINE</span>
+        <nav class="nav-menu">
+            <a class="nav-item active" onclick="switchTab(this)">
+                <span class="material-icons-round">dashboard</span>
+                <span>Visão Geral</span>
+            </a>
+            <a class="nav-item" onclick="requestAuth()">
+                <span class="material-icons-round">tune</span>
+                <span>Configurar Bot</span>
+            </a>
+            <a class="nav-item" onclick="toggleAutoScroll()">
+                <span class="material-icons-round">vertical_align_bottom</span>
+                <span>Auto-Scroll</span>
+            </a>
+            <div style="flex:1"></div>
+            <a class="nav-item danger" onclick="logout()">
+                <span class="material-icons-round">logout</span>
+                <span>Sair / Reiniciar</span>
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="header">
+            <div>
+                <h2 style="font-size:1.2rem; font-weight:700;">Dashboard</h2>
+                <p style="font-size:0.85rem; color:var(--text-muted);">Monitoramento em tempo real</p>
             </div>
-            <div class="log-content" id="log-container"></div>
-            <div class="cmd-line">
-                <span style="color:var(--primary); margin-right:10px;">thiago@admin:~$</span>
-                <input type="text" class="cmd-input" id="cmd-input" placeholder="Digite help..." autocomplete="off">
+            <div class="status-pill">
+                <div id="status-dot" class="dot"></div>
+                <span id="status-text">Conectando...</span>
+            </div>
+        </header>
+
+        <div class="workspace">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                    <h3 style="font-size:1rem;">Conexão WhatsApp</h3>
+                    <span class="material-icons-round" style="color:var(--text-muted);">qr_code_2</span>
+                </div>
+                
+                <div class="qr-container">
+                    <div class="qr-box" id="qr-display">
+                        <span class="material-icons-round" style="font-size:3rem; color:#e5e7eb;">phone_iphone</span>
+                    </div>
+                    <p id="qr-status" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px;">
+                        Aguardando sinal do servidor...
+                    </p>
+                    <button class="btn-primary" onclick="requestAuth()">
+                        <span class="material-icons-round">settings</span>
+                        Gerenciar Respostas
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-window">
+                <div style="padding:20px; border-bottom:1px solid var(--border); background:white; display:flex; justify-content:space-between;">
+                    <h3 style="font-size:1rem;">Feed de Atividades</h3>
+                    <span class="material-icons-round" style="color:var(--text-muted); cursor:pointer;" onclick="clearChat()">delete_sweep</span>
+                </div>
+                <div class="chat-feed" id="chat-feed">
+                    <div class="bubble system">Sistema iniciado. Aguardando mensagens...</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal" id="config-modal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="font-size:1.1rem;">Configurações do Assistente</h3>
+                <button onclick="closeModal()" style="border:none; background:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted);">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:var(--background); padding:20px; border-radius:16px; margin-bottom:20px;">
+                    <div class="input-group">
+                        <label class="label">Gatilho / Chave</label>
+                        <input type="text" id="cfg-key" class="input" placeholder="Ex: config_prompt">
+                    </div>
+                    <div class="input-group">
+                        <label class="label">Resposta / Valor</label>
+                        <input type="text" id="cfg-val" class="input" placeholder="Ex: Você é um assistente...">
+                    </div>
+                    <button class="btn-primary" onclick="saveConfig()">Salvar Regra</button>
+                </div>
+
+                <h4 style="font-size:0.9rem; margin-bottom:12px; color:var(--text-muted);">Regras Ativas</h4>
+                <div id="config-list">
+                    </div>
             </div>
         </div>
     </div>
 
-    <div class="modal-overlay" id="db-modal">
-        <div class="modal-window">
-            <div class="modal-header">
-                <span style="color:var(--secondary); font-weight:bold;">// KNOWLEDGE_BASE_EDITOR</span>
-                <button class="btn-icon" onclick="closeDatabase()">✖</button>
-            </div>
-            
-            <div class="modal-body">
-                <div style="font-size:0.75rem; color:#666; margin-bottom:8px; text-transform:uppercase; letter-spacing:1px;">Configuração Rápida (Clique para editar)</div>
-                <div class="shortcuts">
-                    <div class="tag system" onclick="fillConfig('config_prompt', 'Cole aqui o texto de personalidade da IA...')">🤖 Personalidade da IA</div>
-                    <div class="tag security" onclick="fillConfig('config_numeros', '556299..., 551198...')">🚫 Números Permitidos</div>
-                    <div class="tag security" onclick="fillConfig('config_limite_msg', '200')">📉 Limite Mensagens</div>
-                    <div class="tag" onclick="fillConfig('corte masculino', 'R$ 50,00 - 40 min')">✂️ Adicionar Serviço</div>
-                </div>
-
-                <div class="db-list" id="db-list-container">
-                    <div style="text-align:center; color:#555; margin-top:20px;">Carregando dados...</div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <div class="input-group">
-                    <input type="text" id="new-key" class="input-dark" placeholder="Gatilho (ex: config_prompt)" style="flex:1;">
-                </div>
-                <div class="input-group">
-                    <input type="text" id="new-val" class="input-dark" placeholder="Valor / Resposta da IA" style="flex:3;">
-                    <button class="btn-action" style="width: auto; margin:0;" onclick="addItem()">SALVAR</button>
-                </div>
-            </div>
-        </div>
+    <div class="toast" id="toast">
+        <span class="material-icons-round" style="color:var(--success);">check_circle</span>
+        <span id="toast-msg">Sucesso!</span>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        const qrContainer = document.getElementById('qrcode-container');
-        const logContainer = document.getElementById('log-container');
-        const dbModal = document.getElementById('db-modal');
-        const dbList = document.getElementById('db-list-container');
-        const inputKey = document.getElementById('new-key');
-        const inputVal = document.getElementById('new-val');
+        const chatFeed = document.getElementById('chat-feed');
+        const qrDisplay = document.getElementById('qr-display');
+        const qrStatus = document.getElementById('qr-status');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const toast = document.getElementById('toast');
+        let autoScroll = true;
 
-        function log(msg, type='info') {
-            const div = document.createElement('div');
-            div.className = 'log-line';
-            const time = new Date().toLocaleTimeString('pt-BR');
-            let color = 'var(--text)';
-            if(type === 'warn') color = '#facc15';
-            if(type === 'error') color = '#ef4444';
-            if(type === 'thiago') color = '#c084fc';
-            if(type === 'spy') { color = 'var(--spy-color)'; msg = `📡 ${msg}`; }
-
-            div.innerHTML = `<span style="color:var(--primary)">[${time}]</span> <span style="color:${color}">${msg}</span>`;
-            logContainer.appendChild(div);
-            logContainer.scrollTop = logContainer.scrollHeight;
+        // --- UI HELPERS ---
+        function showToast(msg) {
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // --- FUNÇÕES UX (Facilitadores) ---
-        function fillConfig(key, placeholder) {
-            inputKey.value = key;
-            inputVal.placeholder = placeholder;
-            inputVal.value = '';
-            inputVal.focus();
+        function addBubble(text, type, time) {
+            const bubble = document.createElement('div');
+            bubble.className = `bubble ${type}`;
+            
+            // Formata Remetente
+            let content = text;
+            let meta = '';
+            
+            if(text.includes(']:')) {
+                const parts = text.split(']:');
+                const sender = parts[0].replace('[', '').trim();
+                content = parts.slice(1).join(']:').trim();
+                meta = `<div class="meta"><span>${sender}</span> <span class="time">${time}</span></div>`;
+            } else {
+                meta = `<div class="meta"><span>Sistema</span> <span class="time">${time}</span></div>`;
+            }
+
+            bubble.innerHTML = `${meta}${content}`;
+            chatFeed.appendChild(bubble);
+            if(autoScroll) chatFeed.scrollTop = chatFeed.scrollHeight;
         }
 
+        function parseLog(line) {
+            if(!line) return;
+            const timeMatch = line.match(/^\[(.*?)\]/);
+            const time = timeMatch ? timeMatch[1].split(' ')[1] : '';
+            const clean = line.replace(/^\[.*?\] /, '');
+
+            if(line.includes('[RECEBIDO]')) {
+                addBubble(clean.replace('[RECEBIDO] ', ''), 'incoming', time);
+            } else if(line.includes('[RESPONDIDO]')) {
+                addBubble(clean.replace('[RESPONDIDO] ', ''), 'outgoing', time);
+            } else if(line.includes('[ADMIN]')) {
+                addBubble(`👮 ${clean.replace('[ADMIN] ', '')}`, 'system', time);
+            } else if(line.includes('[ERROR]') || line.includes('[WARN]')) {
+                addBubble(`⚠️ ${clean}`, 'system', time);
+            }
+        }
+
+        // --- SOCKET EVENTS ---
+        socket.on('log_history', (lines) => {
+            chatFeed.innerHTML = '<div class="bubble system">Histórico carregado</div>';
+            lines.forEach(parseLog);
+        });
+
+        socket.on('file_log', parseLog);
+
+        socket.on('qr', (src) => {
+            statusDot.className = 'dot offline';
+            statusText.innerText = 'Aguardando Leitura';
+            qrDisplay.innerHTML = `<img src="${src}" class="qr-img"><div class="scan-line"></div>`;
+            qrStatus.innerText = 'Abra o WhatsApp > Aparelhos Conectados > Conectar';
+        });
+
+        socket.on('ready', () => {
+            statusDot.className = 'dot online';
+            statusText.innerText = 'Online';
+            qrDisplay.innerHTML = `<span class="material-icons-round" style="font-size:4rem; color:var(--secondary);">check_circle</span>`;
+            qrStatus.innerText = 'Sistema Conectado e Operante';
+            showToast('Sistema Online!');
+        });
+
+        socket.on('disconnected', () => {
+            statusDot.className = 'dot offline';
+            statusText.innerText = 'Desconectado';
+            qrStatus.innerText = 'Conexão perdida. Tentando reconectar...';
+        });
+
+        // --- CONFIGURAÇÃO ---
         function requestAuth() {
-            const pwd = prompt("🔑 SENHA DE ADMINISTRADOR:");
+            const pwd = prompt("Senha de Admin:");
             if(pwd) socket.emit('auth_request', pwd);
         }
 
         socket.on('auth_success', () => {
-            log("ACESSO ADMIN CONCEDIDO.", "success");
-            openDatabase();
+            document.getElementById('config-modal').style.display = 'flex';
+            socket.emit('request_knowledge');
         });
 
-        socket.on('auth_fail', () => {
-            log("ACESSO NEGADO.", "error");
-            alert("⛔ SENHA INCORRETA");
-        });
+        socket.on('auth_fail', () => alert("Senha Incorreta"));
 
-        function openDatabase() {
-            dbModal.style.display = 'flex';
-            socket.emit('request_knowledge'); 
-        }
-
-        function closeDatabase() { dbModal.style.display = 'none'; }
-
-        function renderDatabase(data) {
-            dbList.innerHTML = '';
-            const keys = Object.keys(data).sort(); // Ordena alfabético
-            
-            if(keys.length === 0) {
-                dbList.innerHTML = '<div style="text-align:center; color:#555; padding:20px;">Banco de dados vazio.</div>';
-                return;
-            }
-
-            keys.forEach(key => {
+        socket.on('knowledge_update', (data) => {
+            const list = document.getElementById('config-list');
+            list.innerHTML = '';
+            Object.keys(data).sort().forEach(k => {
                 const item = document.createElement('div');
-                // Destaca configurações de sistema
-                const isConfig = key.startsWith('config_') ? 'is-config' : '';
-                item.className = `db-item ${isConfig}`;
-                
+                item.className = 'config-item';
                 item.innerHTML = `
-                    <div style="overflow:hidden; width:100%;">
-                        <span class="db-key">${key}</span>
-                        <div class="db-val">${data[key]}</div>
+                    <div style="overflow:hidden;">
+                        <div style="font-weight:600; color:var(--primary); font-size:0.9rem;">${k}</div>
+                        <div style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${data[k]}</div>
                     </div>
-                    <button class="btn-icon" onclick="deleteItem('${key}')">🗑️</button>
+                    <button onclick="delConfig('${k}')" style="border:none; background:none; color:var(--danger); cursor:pointer;">
+                        <span class="material-icons-round">delete</span>
+                    </button>
                 `;
-                // Ao clicar no item, preenche os campos para edição
                 item.onclick = (e) => {
-                    if(e.target.tagName !== 'BUTTON') {
-                        inputKey.value = key;
-                        inputVal.value = data[key];
+                    if(e.target.tagName!=='BUTTON' && e.target.parentNode.tagName!=='BUTTON') {
+                        document.getElementById('cfg-key').value = k;
+                        document.getElementById('cfg-val').value = data[key];
                     }
                 };
-                dbList.appendChild(item);
+                list.appendChild(item);
             });
-        }
-
-        function addItem() {
-            const key = inputKey.value.trim().toLowerCase();
-            const value = inputVal.value.trim();
-            if(!key || !value) { alert("Preencha os campos!"); return; }
-            
-            socket.emit('add_knowledge', { key, value });
-            log(`Salvando: [${key}]`, 'thiago');
-            // Não limpa, para facilitar ajustes
-        }
-
-        function deleteItem(key) {
-            if(confirm(`Apagar "${key}" permanentemente?`)) {
-                socket.emit('delete_knowledge', key);
-            }
-        }
-
-        socket.on('knowledge_update', (data) => renderDatabase(data));
-        socket.on('qr', (src) => { qrContainer.innerHTML = `<img src="${src}" alt="QR Code">`; });
-        socket.on('ready', () => { qrContainer.innerHTML = `<div style="font-size: 60px; animation: pulse 2s infinite;">🧠</div>`; log("Sistema Conectado.", "thiago"); });
-        socket.on('real_log', (data) => { log(data.text, 'spy'); });
-
-        document.getElementById('cmd-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                const cmd = this.value; this.value = '';
-                log(`thiago@admin:~$ ${cmd}`);
-                if(cmd === 'clear') logContainer.innerHTML = '';
-            }
         });
 
-        function logout() { if(confirm("Desligar o sistema?")) socket.emit('logout'); }
+        function saveConfig() {
+            const k = document.getElementById('cfg-key').value.trim();
+            const v = document.getElementById('cfg-val').value.trim();
+            if(k && v) {
+                socket.emit('add_knowledge', {key:k, value:v});
+                showToast('Regra Salva');
+                document.getElementById('cfg-key').value = '';
+                document.getElementById('cfg-val').value = '';
+            }
+        }
+
+        function delConfig(k) {
+            if(confirm('Apagar regra?')) socket.emit('delete_knowledge', k);
+        }
+
+        socket.on('operation_success', (msg) => showToast(msg));
+
+        // --- UTILS ---
+        function closeModal() { document.getElementById('config-modal').style.display = 'none'; }
+        function clearChat() { chatFeed.innerHTML = '<div class="bubble system">Chat limpo</div>'; }
+        function toggleAutoScroll() { autoScroll = !autoScroll; showToast(`Auto-scroll: ${autoScroll?'ON':'OFF'}`); }
+        function logout() { if(confirm('Reiniciar sistema?')) socket.emit('logout'); }
+        
+        function switchTab(el) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if(el.classList) el.classList.add('active');
+        }
     </script>
 </body>
 </html>
