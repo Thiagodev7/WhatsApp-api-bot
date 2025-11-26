@@ -8,6 +8,7 @@ const { handleIncomingMessage } = require('./handlers/messageHandler');
 const { getRespostas, addResposta, removeResposta } = require('./utils/respostaManager');
 const { getAllAppointments, deleteAppointment } = require('./services/localCalendarService');
 const { LOG_FILE, logSystem } = require('./utils/logger');
+const initDb = require('./utils/initDb'); // <--- IMPORTANTE
 
 const app = express();
 const server = http.createServer(app);
@@ -20,7 +21,7 @@ let isClientReady = false;
 app.use(express.static('public'));
 app.get('/', (req, res) => res.sendFile(__dirname + '/../public/index.html'));
 
-// Logs em Tempo Real
+// Logs
 fs.watchFile(LOG_FILE, { interval: 1000 }, (curr, prev) => {
     if (curr.mtime > prev.mtime) {
         const stream = fs.createReadStream(LOG_FILE, { start: prev.size, end: curr.size });
@@ -51,14 +52,27 @@ io.on('connection', (socket) => {
 
     socket.on('auth_request', (p) => socket.emit(p === ADMIN_PASSWORD ? 'auth_success' : 'auth_fail'));
 
-    socket.on('request_knowledge', () => socket.emit('knowledge_update', getRespostas()));
-    socket.on('add_knowledge', (d) => { addResposta(d.key, d.value); io.emit('knowledge_update', getRespostas()); });
-    socket.on('delete_knowledge', (k) => { removeResposta(k); io.emit('knowledge_update', getRespostas()); });
+    // Configs (Agora Assíncronas)
+    socket.on('request_knowledge', async () => socket.emit('knowledge_update', await getRespostas()));
+    
+    socket.on('add_knowledge', async (d) => { 
+        await addResposta(d.key, d.value); 
+        io.emit('knowledge_update', await getRespostas()); 
+        socket.emit('operation_success', 'Salvo!'); 
+    });
+    
+    socket.on('delete_knowledge', async (k) => { 
+        await removeResposta(k); 
+        io.emit('knowledge_update', await getRespostas()); 
+        socket.emit('operation_success', 'Removido!'); 
+    });
 
-    socket.on('request_appointments', () => socket.emit('appointments_update', getAllAppointments()));
-    socket.on('delete_appointment', (id) => {
-        if(deleteAppointment(id)) {
-            io.emit('appointments_update', getAllAppointments());
+    // Agenda
+    socket.on('request_appointments', async () => socket.emit('appointments_update', await getAllAppointments()));
+    
+    socket.on('delete_appointment', async (id) => {
+        if(await deleteAppointment(id)) {
+            io.emit('appointments_update', await getAllAppointments());
             socket.emit('operation_success', 'Agendamento cancelado');
         }
     });
@@ -70,7 +84,8 @@ io.on('connection', (socket) => {
     });
 });
 
-function main() {
+async function main() {
+  await initDb(); // <--- INICIA BANCO
   logSystem('=== SISTEMA INICIADO ===', 'BOOT');
   startWhatsappBot();
   const PORT = process.env.PORT || 3001; 

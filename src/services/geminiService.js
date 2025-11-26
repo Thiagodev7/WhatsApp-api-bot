@@ -3,12 +3,11 @@ const { geminiApiKey } = require('../config/env');
 const { getRespostas } = require('../utils/respostaManager');
 
 const genAI = new GoogleGenerativeAI(geminiApiKey);
-
-// Usando a versão que você confirmou que funciona
 const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' }); 
 
 async function generateReply(history, userPhone) {
-  const db = getRespostas();
+  // AGORA USAMOS AWAIT AQUI
+  const db = await getRespostas();
   
   const now = new Date();
   const todayInfo = `Hoje é: ${now.toLocaleDateString('pt-BR', { weekday: 'long' })}, ${now.toLocaleDateString('pt-BR')} - Hora atual: ${now.toLocaleTimeString('pt-BR')}`;
@@ -47,7 +46,6 @@ ${knowledgeBase}
 5. Responda de forma curta e natural enquanto coleta dados.
 `;
 
-  // Injeta o prompt na primeira mensagem para garantir obediência
   const chatHistory = [
     { role: 'user', parts: [{ text: promptFinal }] },
     ...history.map(m => ({
@@ -59,15 +57,11 @@ ${knowledgeBase}
   try {
     const result = await model.generateContent({
       contents: chatHistory,
-      generationConfig: {
-        temperature: 0.7, 
-      }
+      generationConfig: { temperature: 0.7 }
     });
     
     const text = result.response.text().trim();
-    const cleanText = text.replace(/```json|```/g, '').trim();
-
-    return cleanText;
+    return text.replace(/```json|```/g, '').trim();
   } catch (error) {
     console.error("Erro Gemini:", error.message);
     return "Desculpe, tive um lapso de memória. Pode repetir?";

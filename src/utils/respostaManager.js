@@ -1,40 +1,49 @@
-const fs = require('fs');
-const path = require('path');
+const db = require('../config/database');
 
-const FILE_PATH = path.join(__dirname, 'respostas.json');
-
-function loadRespostas() {
-    if (!fs.existsSync(FILE_PATH)) return {};
+// Busca todas as configurações e retorna como objeto (compatível com o formato antigo)
+async function getRespostas() {
     try {
-        return JSON.parse(fs.readFileSync(FILE_PATH, 'utf8'));
-    } catch (error) {
+        const res = await db.query('SELECT key, value FROM settings');
+        const configMap = {};
+        res.rows.forEach(row => {
+            configMap[row.key] = row.value;
+        });
+        return configMap;
+    } catch (e) {
+        console.error('Erro ao ler settings:', e);
         return {};
     }
 }
 
-function saveRespostas(data) {
-    fs.writeFileSync(FILE_PATH, JSON.stringify(data, null, 2));
+// Adiciona ou Atualiza uma configuração no banco
+async function addResposta(key, value) {
+    const k = key.toLowerCase();
+    try {
+        // UPSERT: Insere, ou atualiza se a chave já existir
+        await db.query(
+            `INSERT INTO settings (key, value) VALUES ($1, $2)
+             ON CONFLICT (key) DO UPDATE SET value = $2`,
+            [k, value]
+        );
+    } catch (e) {
+        console.error('Erro ao salvar setting:', e);
+    }
 }
 
-function addResposta(key, value) {
-    const data = loadRespostas();
-    data[key.toLowerCase()] = value;
-    saveRespostas(data);
+// Remove uma configuração do banco
+async function removeResposta(key) {
+    const k = key.toLowerCase();
+    try {
+        await db.query('DELETE FROM settings WHERE key = $1', [k]);
+    } catch (e) {
+        console.error('Erro ao deletar setting:', e);
+    }
 }
 
-function removeResposta(key) {
-    const data = loadRespostas();
-    delete data[key.toLowerCase()];
-    saveRespostas(data);
-}
-
-function getRespostas() {
-    return loadRespostas();
-}
-
-function listRespostas() {
-    const data = loadRespostas();
-    return Object.entries(data).map(([k, v]) => `${k}: ${v}`);
+// Lista as configurações (usado pelo comando !listar)
+async function listRespostas() {
+    const map = await getRespostas();
+    return Object.entries(map).map(([k, v]) => `${k}: ${v}`);
 }
 
 module.exports = { addResposta, removeResposta, getRespostas, listRespostas };
