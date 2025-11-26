@@ -6,7 +6,6 @@ const { getHistory, saveHistory, loadMemory } = require('../utils/chatMemoryMana
 const { getState, setState, deleteState, loadState } = require('../utils/bookingStateManager');
 
 const MAX_HISTORY = 15;
-const DEFAULT_DURATION = 40; 
 
 // --- CACHE DE CONFIGURAÇÕES ---
 let dbCache = null;
@@ -87,7 +86,7 @@ async function handleIncomingMessage(client, message) {
     // Envia para o Gemini
     let reply = await generateReply(history, phone);
 
-    // 4. Verifica Ação JSON (LÓGICA MELHORADA)
+    // 4. Verifica Ação JSON
     try {
         if (reply.trim().startsWith('{') && reply.trim().endsWith('}')) {
             const command = JSON.parse(reply);
@@ -95,24 +94,24 @@ async function handleIncomingMessage(client, message) {
             if (command.action === 'AGENDAR') {
                 const startIso = `${command.data}T${command.hora}:00`;
                 
-                // Define duração baseada no serviço (pode melhorar isso depois buscando do banco)
-                let duration = 40;
+                // --- ALTERAÇÃO: Pega duração do banco ou usa 40 como fallback ---
+                let duration = parseInt(db['config_duracao']) || 40;
+                
+                // Lógica extra para serviços específicos (opcional)
                 if(command.servico && command.servico.toLowerCase().includes('mechas')) duration = 120;
 
-                // Verifica disponibilidade no banco
+                // Verifica disponibilidade no banco (passando a duração correta)
                 const slots = await getAvailableSlots(command.data, { slotMinutes: duration });
                 
                 // SE O HORÁRIO ESTIVER OCUPADO OU INVÁLIDO
                 if (!slots.includes(command.hora)) {
-                     // AQUI ESTÁ A CORREÇÃO: Passamos a lista de horários livres para a IA
                      const horariosLivres = slots.length > 0 ? slots.join(', ') : "Nenhum horário livre para este dia.";
-                     
-                     const sysMsg = `Sistema: O horário ${command.hora} NÃO está disponível (está ocupado ou inválido). Os horários livres para ${command.data} são: [ ${horariosLivres} ]. Por favor, peça para o cliente escolher um desses horários.`;
+                     const sysMsg = `Sistema: O horário ${command.hora} NÃO está disponível (ocupado ou passado). Horários livres: [ ${horariosLivres} ]. Peça para escolher outro.`;
                      
                      history.push({ role: 'user', content: sysMsg });
                      console.log("⚠️ Conflito de horário. Avisando IA:", sysMsg);
                      
-                     // Pede para a IA gerar uma nova resposta com base no erro
+                     // Nova tentativa com a IA
                      reply = await generateReply(history, phone); 
 
                 } else {
@@ -139,7 +138,7 @@ async function handleIncomingMessage(client, message) {
         console.error("Erro processando JSON da IA:", jsonError);
     }
 
-    // 5. Resposta Texto Normal (ou a correção do erro de agendamento)
+    // 5. Resposta Texto Normal
     history.push({ role: 'assistant', content: reply });
     saveHistory(from, history.slice(-MAX_HISTORY));
     await replyAndLog(message, reply);
