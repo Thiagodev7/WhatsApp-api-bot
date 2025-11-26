@@ -3,238 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thiago.AI | Gestão Inteligente</title>
+    <title>Infinity Dashboard | Gestor IA</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     
     <style>
         :root {
-            /* Paleta de Cores Premium */
-            --primary: #4f46e5; /* Indigo Vibrante */
+            --bg-body: #f8fafc;
+            --bg-sidebar: #ffffff;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --primary: #6366f1;
             --primary-light: #e0e7ff;
-            --secondary: #10b981; /* Verde Sucesso */
+            --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
-            --surface: #ffffff;
-            --background: #f3f4f6;
-            --text-main: #111827;
-            --text-muted: #6b7280;
-            --border: #e5e7eb;
-            
-            /* Chat Colors */
-            --chat-bg: #f0f2f5;
-            --bubble-me: #4f46e5;
-            --bubble-me-text: #ffffff;
-            --bubble-them: #ffffff;
-            --bubble-them-text: #1f2937;
+            --chat-bg: #eef2ff;
+            --bubble-in: #ffffff;
+            --bubble-out: #6366f1;
+            --bubble-out-text: #ffffff;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; transition: all 0.2s ease-in-out; }
+        
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--background);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
             color: var(--text-main);
             height: 100vh;
             display: flex;
             overflow: hidden;
         }
 
-        /* === SIDEBAR PREMIUM === */
+        /* SIDEBAR */
         .sidebar {
-            width: 280px;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            display: flex; flex-direction: column;
-            padding: 24px;
-            box-shadow: 4px 0 24px rgba(0,0,0,0.02);
-            z-index: 10;
+            width: 280px; background: var(--bg-sidebar); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 24px; z-index: 20;
         }
-
-        .brand {
-            display: flex; align-items: center; gap: 12px;
-            margin-bottom: 40px; padding-left: 12px;
-        }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-left: 8px; }
         .brand-icon {
-            width: 40px; height: 40px; background: var(--primary);
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            color: white; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+            width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), #a855f7);
+            border-radius: 12px; color: white; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
-        .brand-text h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.5px; }
-        .brand-text p { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; }
+        .brand h1 { font-size: 1.2rem; font-weight: 700; }
+        .brand p { font-size: 0.75rem; color: var(--text-muted); }
 
-        .nav-menu { display: flex; flex-direction: column; gap: 8px; }
-        
+        .nav-menu { display: flex; flex-direction: column; gap: 8px; flex: 1; }
         .nav-item {
-            display: flex; align-items: center; gap: 14px;
-            padding: 14px 16px; border-radius: 12px;
-            color: var(--text-muted); text-decoration: none;
-            font-weight: 500; font-size: 0.9rem; transition: all 0.2s ease;
-            cursor: pointer;
+            display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px;
+            color: var(--text-muted); cursor: pointer; font-weight: 500; font-size: 0.95rem;
         }
-        .nav-item:hover { background: var(--background); color: var(--primary); transform: translateX(4px); }
-        .nav-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
-        .nav-item.danger { margin-top: auto; color: var(--danger); }
-        .nav-item.danger:hover { background: #fee2e2; }
+        .nav-item:hover { background: #f1f5f9; color: var(--text-main); transform: translateX(4px); }
+        .nav-item.active { background: var(--primary); color: white; box-shadow: 0 8px 20px rgba(99, 102, 241, 0.2); }
+        .nav-item.active:hover { transform: none; }
 
-        /* === MAIN AREA === */
-        .main-content { flex: 1; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-
-        /* Header Flutuante */
+        /* MAIN */
+        .main { flex: 1; display: flex; flex-direction: column; position: relative; }
         .header {
-            height: 80px; padding: 0 40px;
+            height: 80px; padding: 0 40px; display: flex; align-items: center; justify-content: space-between;
+            background: rgba(255,255,255,0.8); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); z-index: 10;
+        }
+        
+        /* VIEWS */
+        .view { display: none; height: calc(100vh - 80px); overflow-y: auto; padding: 30px 40px; animation: fadeIn 0.4s ease; }
+        .view.active { display: block; }
+
+        /* DASHBOARD WIDGETS */
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; margin-bottom: 30px; }
+        .widget {
+            background: var(--bg-card); padding: 24px; border-radius: 20px; border: 1px solid var(--border);
+            display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;
+        }
+        .widget-value { font-size: 2.5rem; font-weight: 700; margin: 10px 0; }
+        .widget-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; }
+
+        /* AGENDA & LISTS */
+        .agenda-grid { display: grid; gap: 16px; }
+        .app-card {
+            background: var(--bg-card); padding: 20px; border-radius: 16px; border: 1px solid var(--border);
             display: flex; align-items: center; justify-content: space-between;
-            background: rgba(255,255,255,0.8); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
         }
+        .app-card:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); border-color: var(--primary); }
+
+        /* CHAT */
+        .chat-layout {
+            display: grid; grid-template-columns: 1fr; height: 100%; background: var(--bg-card);
+            border-radius: 24px; border: 1px solid var(--border); overflow: hidden;
+        }
+        .chat-area { flex: 1; background: var(--chat-bg); padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .bubble { max-width: 70%; padding: 12px 18px; border-radius: 18px; font-size: 0.95rem; line-height: 1.5; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .bubble.in { background: var(--bubble-in); align-self: flex-start; border-bottom-left-radius: 4px; }
+        .bubble.out { background: var(--bubble-out); color: var(--bubble-out-text); align-self: flex-end; border-bottom-right-radius: 4px; }
         
-        .status-pill {
-            display: flex; align-items: center; gap: 8px;
-            padding: 8px 16px; border-radius: 30px;
-            background: white; border: 1px solid var(--border);
-            font-size: 0.85rem; font-weight: 600;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
-        .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-muted); transition: 0.3s; }
-        .dot.online { background: var(--secondary); box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); animation: pulse 2s infinite; }
-        .dot.offline { background: var(--danger); }
+        /* SETTINGS PAGE (NOVO LAYOUT) */
+        .settings-grid { display: grid; grid-template-columns: 1fr 350px; gap: 30px; }
+        .settings-card { background: white; border-radius: 20px; border: 1px solid var(--border); padding: 30px; margin-bottom: 20px; }
+        .settings-header { margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+        .settings-header h3 { font-size: 1.1rem; margin-bottom: 5px; }
+        .settings-header p { font-size: 0.85rem; color: var(--text-muted); }
 
-        /* Dashboard Grid */
-        .workspace {
-            padding: 30px 40px; overflow-y: auto; flex: 1;
-            display: grid; grid-template-columns: 380px 1fr; gap: 30px;
-        }
-
-        /* Cards */
-        .card {
-            background: var(--surface); border-radius: 24px;
-            padding: 30px; border: 1px solid var(--border);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-            display: flex; flex-direction: column; height: 100%; transition: transform 0.2s;
-        }
-        .card:hover { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
-
-        /* QR Section */
-        .qr-container {
-            flex: 1; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; text-align: center;
-        }
-        .qr-box {
-            background: white; padding: 15px; border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08); margin: 20px 0;
-            border: 1px solid var(--border); width: 240px; height: 240px;
-            display: flex; align-items: center; justify-content: center;
-            position: relative;
-        }
-        .qr-img { width: 100%; height: 100%; object-fit: contain; border-radius: 10px; }
-        .scan-line {
-            position: absolute; width: 100%; height: 2px; background: var(--primary);
-            top: 0; animation: scan 2s infinite linear; opacity: 0.6;
-        }
-
-        .btn-primary {
-            background: var(--primary); color: white;
-            border: none; padding: 14px 28px; border-radius: 14px;
-            font-weight: 600; font-size: 0.95rem; cursor: pointer;
-            width: 100%; transition: 0.2s; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35); }
-        .btn-primary:active { transform: translateY(0); }
-
-        /* Chat Moderno */
-        .chat-window {
-            background: var(--chat-bg); border-radius: 24px;
-            border: 1px solid var(--border); overflow: hidden;
-            display: flex; flex-direction: column; position: relative;
-        }
-        .chat-feed {
-            flex: 1; padding: 25px; overflow-y: auto;
-            display: flex; flex-direction: column; gap: 16px;
-        }
-        
-        .bubble {
-            max-width: 75%; padding: 12px 18px; border-radius: 18px;
-            font-size: 0.95rem; line-height: 1.5; position: relative;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        .bubble.incoming {
-            background: var(--bubble-them); color: var(--bubble-them-text);
-            align-self: flex-start; border-bottom-left-radius: 4px;
-        }
-        .bubble.outgoing {
-            background: var(--bubble-me); color: var(--bubble-me-text);
-            align-self: flex-end; border-bottom-right-radius: 4px;
-        }
-        .bubble.system {
-            align-self: center; background: rgba(0,0,0,0.05); color: var(--text-muted);
-            font-size: 0.8rem; padding: 6px 16px; border-radius: 50px; margin: 10px 0;
-            box-shadow: none; border: 1px solid rgba(0,0,0,0.05);
-        }
-        .bubble .meta {
-            display: flex; justify-content: space-between; align-items: center;
-            font-size: 0.7rem; margin-bottom: 4px; opacity: 0.8; font-weight: 600;
-        }
-        .bubble .time { font-size: 0.65rem; margin-left: 10px; opacity: 0.6; font-weight: normal; }
-
-        /* Modal Bonito */
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); backdrop-filter: blur(8px);
-            display: none; align-items: center; justify-content: center; z-index: 100;
-            animation: fadeIn 0.2s;
-        }
-        .modal-card {
-            background: var(--surface); width: 550px; max-width: 90%;
-            border-radius: 24px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            overflow: hidden; animation: slideUp 0.3s;
-        }
-        .modal-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .modal-body { padding: 24px; max-height: 60vh; overflow-y: auto; }
-        
         .input-group { margin-bottom: 20px; }
-        .label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
-        .input { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; transition: 0.2s; font-family: inherit; }
-        .input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        .label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 8px; color: var(--text-main); }
+        .input { width: 100%; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; font-family: inherit; font-size: 0.9rem; background: #f8fafc; }
+        .input:focus { border-color: var(--primary); background: white; box-shadow: 0 0 0 3px var(--primary-light); }
+        .textarea { height: 120px; resize: vertical; line-height: 1.5; }
+
+        .shortcuts { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+        .pill { 
+            padding: 8px 14px; border-radius: 20px; font-size: 0.8rem; background: white; 
+            border: 1px solid var(--border); cursor: pointer; color: var(--text-muted); font-weight: 500;
+        }
+        .pill:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
 
         .config-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 16px; background: var(--background); border-radius: 12px;
-            margin-bottom: 10px; border: 1px solid transparent; transition: 0.2s;
+            display: flex; justify-content: space-between; align-items: center; padding: 16px;
+            background: #f8fafc; border-radius: 12px; margin-bottom: 10px; border: 1px solid transparent;
         }
-        .config-item:hover { border-color: var(--border); background: white; }
+        .config-item:hover { border-color: var(--border); background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 
-        /* Toast */
+        .btn { padding: 12px 24px; border-radius: 12px; border: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+        .btn-primary { background: var(--primary); color: white; width: 100%; }
+        .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
+        .btn-danger { background: #fee2e2; color: var(--danger); width: 100%; }
+        .btn-danger:hover { background: #fecaca; }
+        .btn-icon { background: transparent; color: var(--text-muted); padding: 8px; }
+        .btn-icon:hover { color: var(--danger); background: #fee2e2; }
+
+        /* TOAST */
         .toast {
-            position: fixed; top: 24px; right: 24px;
-            background: white; padding: 16px 24px; border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            display: flex; align-items: center; gap: 12px;
-            transform: translateX(150%); transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border-left: 4px solid var(--success); font-weight: 500; z-index: 200;
+            position: fixed; bottom: 24px; right: 24px; background: #1f2937; color: white;
+            padding: 12px 24px; border-radius: 12px; transform: translateY(150%); z-index: 200;
+            display: flex; align-items: center; gap: 10px;
         }
-        .toast.show { transform: translateX(0); }
+        .toast.show { transform: translateY(0); }
 
-        /* Animações */
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
-        @keyframes scan { 0% { top: 0; opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-        @keyframes popIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* QR OVERLAY */
+        .qr-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(5px); z-index: 50; display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .qr-box { background: white; padding: 15px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.1); border: 1px solid var(--border); }
 
-        /* Mobile */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
         @media (max-width: 900px) {
-            .sidebar { position: fixed; bottom: 0; width: 100%; height: 70px; flex-direction: row; justify-content: space-around; padding: 0; border-top: 1px solid var(--border); border-right: none; }
-            .brand { display: none; }
-            .nav-menu { flex-direction: row; width: 100%; justify-content: space-around; }
-            .nav-item { flex-direction: column; padding: 8px; font-size: 0.7rem; gap: 4px; border-radius: 8px; }
-            .nav-item span { display: block; }
-            .nav-item.danger { margin-top: 0; }
-            .workspace { grid-template-columns: 1fr; padding: 20px; padding-bottom: 90px; }
-            .header { padding: 0 20px; }
-            .card { padding: 20px; }
-            .qr-container { min-height: 300px; }
+            .sidebar { position: fixed; bottom: 0; width: 100%; height: 70px; flex-direction: row; padding: 0; border-top: 1px solid var(--border); }
+            .brand { display: none; } .nav-menu { flex-direction: row; justify-content: space-around; padding: 0 10px; }
+            .nav-item span { display: none; } .settings-grid { grid-template-columns: 1fr; }
+            .main { padding-bottom: 80px; }
         }
     </style>
 </head>
@@ -242,263 +162,306 @@
 
     <aside class="sidebar">
         <div class="brand">
-            <div class="brand-icon">
-                <span class="material-icons-round">smart_toy</span>
-            </div>
-            <div class="brand-text">
-                <h1>Thiago.AI</h1>
-                <p>Painel Admin v9.0</p>
-            </div>
+            <div class="brand-icon"><span class="material-icons-round">auto_awesome</span></div>
+            <div><h1>Infinity</h1><p>Gestor Inteligente</p></div>
         </div>
-
         <nav class="nav-menu">
-            <a class="nav-item active" onclick="switchTab(this)">
-                <span class="material-icons-round">dashboard Thiago</span>
-                <span>Visão Geral</span>
+            <a class="nav-item active" onclick="showTab('home', this)">
+                <span class="material-icons-round">space_dashboard</span><span>Dashboard</span>
             </a>
-            <a class="nav-item" onclick="requestAuth()">
-                <span class="material-icons-round">tune</span>
-                <span>Configurar Bot</span>
+            <a class="nav-item" onclick="showTab('agenda', this)">
+                <span class="material-icons-round">calendar_month</span><span>Agenda</span>
             </a>
-            <a class="nav-item" onclick="toggleAutoScroll()">
-                <span class="material-icons-round">vertical_align_bottom</span>
-                <span>Auto-Scroll</span>
+            <a class="nav-item" onclick="showTab('chat', this)">
+                <span class="material-icons-round">chat</span><span>Atendimento</span>
             </a>
-            <div style="flex:1"></div>
-            <a class="nav-item danger" onclick="logout()">
-                <span class="material-icons-round">logout</span>
-                <span>Sair / Reiniciar</span>
+            <a class="nav-item" onclick="authSettings(this)">
+                <span class="material-icons-round">tune</span><span>Configurações</span>
             </a>
         </nav>
+        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border);">
+            <a class="nav-item" style="color:var(--danger);" onclick="logout()">
+                <span class="material-icons-round">power_settings_new</span><span>Reiniciar</span>
+            </a>
+        </div>
     </aside>
 
-    <main class="main-content">
+    <main class="main">
         <header class="header">
             <div>
-                <h2 style="font-size:1.2rem; font-weight:700;">Dashboard</h2>
-                <p style="font-size:0.85rem; color:var(--text-muted);">Monitoramento em tempo real</p>
+                <h2 style="font-weight:700; font-size:1.1rem;">Painel de Controle</h2>
+                <p style="font-size:0.85rem; color:var(--text-muted);">Bem-vindo, Administrador.</p>
             </div>
-            <div class="status-pill">
-                <div id="status-dot" class="dot"></div>
-                <span id="status-text">Conectando...</span>
+            <div style="display:flex; align-items:center; gap:8px; padding:6px 12px; background:#ecfdf5; border-radius:20px; border:1px solid #d1fae5;">
+                <div id="status-dot" style="width:8px; height:8px; border-radius:50%; background:var(--success);"></div>
+                <span id="status-text" style="font-size:0.8rem; font-weight:600; color:var(--success);">Online</span>
             </div>
         </header>
 
-        <div class="workspace">
-            <div class="card">
-                <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                    <h3 style="font-size:1rem;">Conexão WhatsApp</h3>
-                    <span class="material-icons-round" style="color:var(--text-muted);">qr_code_2</span>
+        <div id="qr-overlay" class="qr-overlay">
+            <h2 style="margin-bottom:20px;">Conectar WhatsApp</h2>
+            <div class="qr-box" id="qr-box"></div>
+            <p style="margin-top:20px; color:var(--text-muted);">Abra o WhatsApp > Aparelhos Conectados > Conectar</p>
+        </div>
+
+        <div id="view-home" class="view active">
+            <div class="grid-3">
+                <div class="widget">
+                    <span class="widget-label">Agendamentos</span>
+                    <div class="widget-value" id="total-apps">0</div>
                 </div>
-                
-                <div class="qr-container">
-                    <div class="qr-box" id="qr-display">
-                        <span class="material-icons-round" style="font-size:3rem; color:#e5e7eb;">phone_iphone</span>
-                    </div>
-                    <p id="qr-status" style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px;">
-                        Aguardando sinal do servidor...
-                    </p>
-                    <button class="btn-primary" onclick="requestAuth()">
-                        <span class="material-icons-round">settings</span>
-                        Gerenciar Respostas
-                    </button>
+                <div class="widget">
+                    <span class="widget-label">Mensagens Hoje</span>
+                    <div class="widget-value" id="total-msgs">0</div>
+                </div>
+                <div class="widget">
+                    <span class="widget-label">Status</span>
+                    <div class="widget-value" style="color:var(--success);">Ativo</div>
                 </div>
             </div>
+            <h3 style="margin-bottom:20px;">Atividade Recente</h3>
+            <div id="recent-list" class="agenda-grid"></div>
+        </div>
 
-            <div class="chat-window">
-                <div style="padding:20px; border-bottom:1px solid var(--border); background:white; display:flex; justify-content:space-between;">
-                    <h3 style="font-size:1rem;">Feed de Atividades</h3>
-                    <span class="material-icons-round" style="color:var(--text-muted); cursor:pointer;" onclick="clearChat()">delete_sweep</span>
+        <div id="view-agenda" class="view">
+            <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
+                <h2>Minha Agenda</h2>
+                <button class="btn" style="background:white; border:1px solid var(--border);" onclick="refreshData()">Atualizar</button>
+            </div>
+            <div id="agenda-list" class="agenda-grid"></div>
+        </div>
+
+        <div id="view-chat" class="view" style="padding-bottom:0; height:100%;">
+            <div class="chat-layout">
+                <div class="chat-area" id="chat-feed">
+                    <div class="bubble" style="align-self:center; background:rgba(0,0,0,0.05); color:gray; font-size:0.8rem;">Histórico carregado.</div>
                 </div>
-                <div class="chat-feed" id="chat-feed">
-                    <div class="bubble system">Sistema iniciado. Aguardando mensagens...</div>
+            </div>
+        </div>
+
+        <div id="view-settings" class="view">
+            <h2 style="margin-bottom:30px;">Configurações do Sistema</h2>
+            
+            <div class="settings-grid">
+                <div>
+                    <div class="settings-card">
+                        <div class="settings-header">
+                            <h3>Cérebro do Robô</h3>
+                            <p>Configure como a Inteligência Artificial deve se comportar.</p>
+                        </div>
+
+                        <label class="label">Atalhos Rápidos</label>
+                        <div class="shortcuts">
+                            <div class="pill" onclick="fill('config_prompt', 'Você é a assistente virtual...')">🤖 Personalidade</div>
+                            <div class="pill" onclick="fill('config_numeros', '551199..., 5521...')">🚫 Bloqueio</div>
+                            <div class="pill" onclick="fill('config_limite_msg', '200')">📊 Limites</div>
+                            <div class="pill" onclick="fill('corte', 'R$ 50')">✂️ Serviço</div>
+                        </div>
+
+                        <div class="input-group">
+                            <label class="label">Gatilho / Chave</label>
+                            <input id="cfg-key" class="input" placeholder="Ex: config_prompt">
+                        </div>
+                        <div class="input-group">
+                            <label class="label">Instrução / Valor</label>
+                            <textarea id="cfg-val" class="input textarea" placeholder="Digite o conteúdo aqui..."></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="saveConfig()">Salvar Configuração</button>
+                    </div>
+
+                    <h3 style="margin-bottom:15px;">Regras Ativas</h3>
+                    <div id="config-list"></div>
+                </div>
+
+                <div>
+                    <div class="settings-card">
+                        <div class="settings-header">
+                            <h3>Conexão WhatsApp</h3>
+                            <p>Gerencie a sessão do robô.</p>
+                        </div>
+                        <div style="text-align:center; margin-bottom:20px;">
+                            <div id="conn-status-icon" style="width:60px; height:60px; background:#ecfdf5; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; margin-bottom:10px;">
+                                <span class="material-icons-round" style="color:var(--success); font-size:30px;">link</span>
+                            </div>
+                            <h4 id="conn-status-text">Conectado</h4>
+                        </div>
+                        <button class="btn btn-danger" onclick="disconnectWhatsapp()">
+                            <span class="material-icons-round">link_off</span> Desconectar
+                        </button>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="settings-header">
+                            <h3>Zona de Perigo</h3>
+                        </div>
+                        <button class="btn" style="background:#f8fafc; color:var(--text-main); border:1px solid var(--border); width:100%;" onclick="clearChat()">
+                            <span class="material-icons-round">cleaning_services</span> Limpar Histórico
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <div class="modal" id="config-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3 style="font-size:1.1rem;">Configurações do Assistente</h3>
-                <button onclick="closeModal()" style="border:none; background:none; font-size:1.5rem; cursor:pointer; color:var(--text-muted);">×</button>
-            </div>
-            <div class="modal-body">
-                <div style="background:var(--background); padding:20px; border-radius:16px; margin-bottom:20px;">
-                    <div class="input-group">
-                        <label class="label">Gatilho / Chave</label>
-                        <input type="text" id="cfg-key" class="input" placeholder="Ex: config_prompt">
-                    </div>
-                    <div class="input-group">
-                        <label class="label">Resposta / Valor</label>
-                        <input type="text" id="cfg-val" class="input" placeholder="Ex: Você é um assistente...">
-                    </div>
-                    <button class="btn-primary" onclick="saveConfig()">Salvar Regra</button>
-                </div>
-
-                <h4 style="font-size:0.9rem; margin-bottom:12px; color:var(--text-muted);">Regras Ativas</h4>
-                <div id="config-list">
-                    </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="toast" id="toast">
-        <span class="material-icons-round" style="color:var(--success);">check_circle</span>
-        <span id="toast-msg">Sucesso!</span>
-    </div>
+    <div class="toast" id="toast"><span class="material-icons-round" style="color:#4ade80">check_circle</span><span id="toast-msg">Salvo!</span></div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        const chatFeed = document.getElementById('chat-feed');
-        const qrDisplay = document.getElementById('qr-display');
-        const qrStatus = document.getElementById('qr-status');
-        const statusDot = document.getElementById('status-dot');
-        const statusText = document.getElementById('status-text');
-        const toast = document.getElementById('toast');
-        let autoScroll = true;
+        const els = {
+            chat: document.getElementById('chat-feed'),
+            qr: document.getElementById('qr-overlay'),
+            qrBox: document.getElementById('qr-box'),
+            statusDot: document.getElementById('status-dot'),
+            statusText: document.getElementById('status-text'),
+            connIcon: document.getElementById('conn-status-icon'),
+            connText: document.getElementById('conn-status-text'),
+            totalApps: document.getElementById('total-apps'),
+            totalMsgs: document.getElementById('total-msgs'),
+            agenda: document.getElementById('agenda-list'),
+            recent: document.getElementById('recent-list'),
+            configs: document.getElementById('config-list')
+        };
+        let msgCount = 0;
 
-        // --- UI HELPERS ---
-        function showToast(msg) {
-            document.getElementById('toast-msg').innerText = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
+        // NAV
+        function showTab(id, btn) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('view-'+id).classList.add('active');
+            if(btn) btn.classList.add('active'); else document.querySelectorAll('.nav-item')[3].classList.add('active'); // settings
+            if(id === 'agenda' || id === 'home') refreshData();
         }
 
-        function addBubble(text, type, time) {
-            const bubble = document.createElement('div');
-            bubble.className = `bubble ${type}`;
-            
-            // Formata Remetente
-            let content = text;
-            let meta = '';
-            
-            if(text.includes(']:')) {
-                const parts = text.split(']:');
-                const sender = parts[0].replace('[', '').trim();
-                content = parts.slice(1).join(']:').trim();
-                meta = `<div class="meta"><span>${sender}</span> <span class="time">${time}</span></div>`;
-            } else {
-                meta = `<div class="meta"><span>Sistema</span> <span class="time">${time}</span></div>`;
-            }
-
-            bubble.innerHTML = `${meta}${content}`;
-            chatFeed.appendChild(bubble);
-            if(autoScroll) chatFeed.scrollTop = chatFeed.scrollHeight;
-        }
-
-        function parseLog(line) {
-            if(!line) return;
-            const timeMatch = line.match(/^\[(.*?)\]/);
-            const time = timeMatch ? timeMatch[1].split(' ')[1] : '';
-            const clean = line.replace(/^\[.*?\] /, '');
-
-            if(line.includes('[RECEBIDO]')) {
-                addBubble(clean.replace('[RECEBIDO] ', ''), 'incoming', time);
-            } else if(line.includes('[RESPONDIDO]')) {
-                addBubble(clean.replace('[RESPONDIDO] ', ''), 'outgoing', time);
-            } else if(line.includes('[ADMIN]')) {
-                addBubble(`👮 ${clean.replace('[ADMIN] ', '')}`, 'system', time);
-            } else if(line.includes('[ERROR]') || line.includes('[WARN]')) {
-                addBubble(`⚠️ ${clean}`, 'system', time);
+        function authSettings(btn) {
+            const p = prompt("Senha de Admin:");
+            if(p) {
+                socket.emit('auth_request', p);
+                window.tempBtn = btn; // Guarda ref do botão
             }
         }
-
-        // --- SOCKET EVENTS ---
-        socket.on('log_history', (lines) => {
-            chatFeed.innerHTML = '<div class="bubble system">Histórico carregado</div>';
-            lines.forEach(parseLog);
+        socket.on('auth_success', () => {
+            showTab('settings', window.tempBtn);
+            socket.emit('request_knowledge');
         });
+        socket.on('auth_fail', () => alert('Senha incorreta!'));
 
-        socket.on('file_log', parseLog);
+        // SOCKETS
+        socket.on('connect', () => setStatus(true));
+        socket.on('disconnect', () => setStatus(false));
+        
+        function setStatus(online) {
+            const color = online ? 'var(--success)' : 'var(--danger)';
+            els.statusDot.style.background = color;
+            els.statusText.innerText = online ? 'Online' : 'Offline';
+            els.statusText.style.color = color;
+            
+            // Atualiza painel settings
+            els.connText.innerText = online ? 'Conectado' : 'Desconectado';
+            els.connIcon.style.background = online ? '#ecfdf5' : '#fef2f2';
+            els.connIcon.innerHTML = `<span class="material-icons-round" style="color:${online ? 'var(--success)' : 'var(--danger)'}; font-size:30px;">${online ? 'link' : 'link_off'}</span>`;
+        }
 
         socket.on('qr', (src) => {
-            statusDot.className = 'dot offline';
-            statusText.innerText = 'Aguardando Leitura';
-            qrDisplay.innerHTML = `<img src="${src}" class="qr-img"><div class="scan-line"></div>`;
-            qrStatus.innerText = 'Abra o WhatsApp > Aparelhos Conectados > Conectar';
+            els.qr.style.display = 'flex';
+            els.qrBox.innerHTML = `<img src="${src}" style="width:100%; height:100%; object-fit:contain;">`;
+            setStatus(false);
+            els.statusText.innerText = 'Aguardando Leitura';
         });
 
         socket.on('ready', () => {
-            statusDot.className = 'dot online';
-            statusText.innerText = 'Online';
-            qrDisplay.innerHTML = `<span class="material-icons-round" style="font-size:4rem; color:var(--secondary);">check_circle</span>`;
-            qrStatus.innerText = 'Sistema Conectado e Operante';
-            showToast('Sistema Online!');
+            els.qr.style.display = 'none';
+            setStatus(true);
+            showToast('Sistema Pronto!');
         });
 
-        socket.on('disconnected', () => {
-            statusDot.className = 'dot offline';
-            statusText.innerText = 'Desconectado';
-            qrStatus.innerText = 'Conexão perdida. Tentando reconectar...';
-        });
+        // CHAT
+        socket.on('log_history', lines => { els.chat.innerHTML=''; lines.forEach(parseLog); });
+        socket.on('file_log', line => { parseLog(line); if(line.includes('RECEBIDO')) { msgCount++; els.totalMsgs.innerText = msgCount; }});
 
-        // --- CONFIGURAÇÃO ---
-        function requestAuth() {
-            const pwd = prompt("Senha de Admin:");
-            if(pwd) socket.emit('auth_request', pwd);
+        function parseLog(line) {
+            if(!line) return;
+            const clean = line.replace(/^\[.*?\] /, '');
+            const time = line.match(/^\[(.*?)\]/)?.[1]?.split(' ')[1] || '';
+            if(line.includes('RECEBIDO')) bubble(clean.replace('RECEBIDO ',''), 'in', time);
+            else if(line.includes('RESPONDIDO')) bubble(clean.replace('RESPONDIDO ',''), 'out', time);
         }
 
-        socket.on('auth_success', () => {
-            document.getElementById('config-modal').style.display = 'flex';
-            socket.emit('request_knowledge');
-        });
+        function bubble(txt, type, time) {
+            const d = document.createElement('div');
+            d.className = `bubble ${type}`;
+            let sender = txt.includes(']:') ? txt.split(']:')[0].replace('[','') : '';
+            let msg = txt.includes(']:') ? txt.split(']:')[1] : txt;
+            d.innerHTML = `${sender ? '<b>'+sender+'</b><br>' : ''}${msg} <span style="font-size:0.6rem; float:right; margin-top:5px; opacity:0.6;">${time}</span>`;
+            els.chat.appendChild(d);
+            els.chat.scrollTop = els.chat.scrollHeight;
+        }
 
-        socket.on('auth_fail', () => alert("Senha Incorreta"));
+        // DATA
+        function refreshData() { socket.emit('request_appointments'); }
+        socket.on('appointments_update', apps => {
+            els.totalApps.innerText = apps.length;
+            els.agenda.innerHTML = ''; els.recent.innerHTML = '';
+            
+            if(!apps.length) els.agenda.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">Agenda vazia</div>';
 
-        socket.on('knowledge_update', (data) => {
-            const list = document.getElementById('config-list');
-            list.innerHTML = '';
-            Object.keys(data).sort().forEach(k => {
-                const item = document.createElement('div');
-                item.className = 'config-item';
-                item.innerHTML = `
-                    <div style="overflow:hidden;">
-                        <div style="font-weight:600; color:var(--primary); font-size:0.9rem;">${k}</div>
-                        <div style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${data[k]}</div>
+            apps.forEach(app => {
+                const date = new Date(app.start);
+                const card = `
+                <div class="app-card">
+                    <div style="display:flex; align-items:center;">
+                        <div style="background:#f1f5f9; padding:10px 15px; border-radius:10px; text-align:center; margin-right:15px;">
+                            <div style="color:var(--primary); font-weight:bold; font-size:1.2rem;">${date.getDate()}</div>
+                            <div style="font-size:0.7rem; text-transform:uppercase; color:#666;">${date.toLocaleDateString('pt-BR',{month:'short'})}</div>
+                        </div>
+                        <div>
+                            <div style="font-weight:700; font-size:1rem;">${(app.summary||"Cliente").split('-')[1] || "Cliente"}</div>
+                            <div style="font-size:0.85rem; color:#666;">${date.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} • ${(app.summary||"").split('-')[0]}</div>
+                        </div>
                     </div>
-                    <button onclick="delConfig('${k}')" style="border:none; background:none; color:var(--danger); cursor:pointer;">
-                        <span class="material-icons-round">delete</span>
-                    </button>
-                `;
-                item.onclick = (e) => {
-                    if(e.target.tagName!=='BUTTON' && e.target.parentNode.tagName!=='BUTTON') {
-                        document.getElementById('cfg-key').value = k;
-                        document.getElementById('cfg-val').value = data[key];
-                    }
-                };
-                list.appendChild(item);
+                    <button class="btn-icon" onclick="cancelApp('${app.id}')"><span class="material-icons-round">close</span></button>
+                </div>`;
+                els.agenda.innerHTML += card;
+                // Adiciona os 3 primeiros na home
+                if(els.recent.children.length < 3) els.recent.innerHTML += card;
             });
         });
 
-        function saveConfig() {
-            const k = document.getElementById('cfg-key').value.trim();
-            const v = document.getElementById('cfg-val').value.trim();
-            if(k && v) {
-                socket.emit('add_knowledge', {key:k, value:v});
-                showToast('Regra Salva');
-                document.getElementById('cfg-key').value = '';
-                document.getElementById('cfg-val').value = '';
-            }
+        function cancelApp(id) { if(confirm('Cancelar?')) socket.emit('delete_appointment', id); }
+
+        // CONFIGS
+        socket.on('knowledge_update', data => {
+            els.configs.innerHTML = '';
+            Object.keys(data).forEach(k => {
+                const div = document.createElement('div');
+                div.className = 'config-item';
+                div.innerHTML = `<div><b>${k}</b><br><span style="font-size:0.8rem; color:#666;">${data[k].substring(0,40)}...</span></div>
+                <button class="btn-icon" onclick="delConfig('${k}')"><span class="material-icons-round">delete</span></button>`;
+                div.onclick = (e) => { if(e.target.tagName!=='BUTTON' && e.target.parentNode.tagName!=='BUTTON') fill(k, data[k]); };
+                els.configs.appendChild(div);
+            });
+        });
+
+        function fill(k,v) { document.getElementById('cfg-key').value=k; document.getElementById('cfg-val').value=v; }
+        function saveConfig() { 
+            socket.emit('add_knowledge', {key:document.getElementById('cfg-key').value, value:document.getElementById('cfg-val').value});
+            showToast('Salvo!');
         }
-
-        function delConfig(k) {
-            if(confirm('Apagar regra?')) socket.emit('delete_knowledge', k);
-        }
-
-        socket.on('operation_success', (msg) => showToast(msg));
-
-        // --- UTILS ---
-        function closeModal() { document.getElementById('config-modal').style.display = 'none'; }
-        function clearChat() { chatFeed.innerHTML = '<div class="bubble system">Chat limpo</div>'; }
-        function toggleAutoScroll() { autoScroll = !autoScroll; showToast(`Auto-scroll: ${autoScroll?'ON':'OFF'}`); }
-        function logout() { if(confirm('Reiniciar sistema?')) socket.emit('logout'); }
+        function delConfig(k) { if(confirm('Apagar?')) socket.emit('delete_knowledge', k); }
         
-        function switchTab(el) {
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            if(el.classList) el.classList.add('active');
+        function disconnectWhatsapp() {
+            if(confirm("Tem certeza? O robô vai parar.")) socket.emit('logout');
         }
+        function clearChat() { els.chat.innerHTML = ''; }
+        function logout() { if(confirm('Reiniciar tudo?')) socket.emit('logout'); }
+        function showToast(msg) { 
+            const t = document.getElementById('toast');
+            t.querySelector('span').nextElementSibling.innerText = msg;
+            t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3000); 
+        }
+
+        // Init
+        refreshData();
     </script>
 </body>
 </html>

@@ -1,28 +1,64 @@
 {
   "273396143235156@lid": [
     {
-      "role": "user",
-      "content": "oi"
-    },
-    {
       "role": "assistant",
-      "content": "Olá! Em que posso te ajudar hoje? 😊"
+      "content": "Sabe e A-RRA-SA! ✨ O Gabriel é expert em loiros, viu? 😉 Morena iluminada, loiríssimo, o que você imaginar! 😍"
     },
     {
       "role": "user",
-      "content": "oi"
+      "content": "E fala um pouco sobre o Gabriel"
     },
     {
       "role": "assistant",
-      "content": "Olá! Em que posso te ajudar hoje? 😊"
+      "content": "O Gabriel é um amor! 🥰 Ele atua na profissão que ama há mais de 6 anos, cuidando das pessoas e ajudando a realçar a beleza individual de cada uma através dos cabelos. 💖 Ele também é professor no Instituto Ana Hickmann, acredita? 🤩 Ele sempre diz que o cabelo é mais que um acessório, é a nossa coroa! 👑 Quer agendar um horário com ele pra um corte ou mechas? 😉"
     },
     {
       "role": "user",
-      "content": "oi"
+      "content": "Bom dia"
     },
     {
       "role": "assistant",
-      "content": "Olá! Em que posso te ajudar hoje? 😊"
+      "content": "Bom dia!! 😊 Em que posso te ajudar hoje? ✨"
+    },
+    {
+      "role": "user",
+      "content": "Quem é o Gabriel?"
+    },
+    {
+      "role": "assistant",
+      "content": "O Gabriel é um jovem cabelereiro que está há mais de 6 anos cuidando dos cabelos e elevando a autoestima das clientes! 💖 Ele é super talentoso e atencioso. Quer agendar um horário com ele? 😉"
+    },
+    {
+      "role": "user",
+      "content": "Aonde fica o salão dele?"
+    },
+    {
+      "role": "assistant",
+      "content": "O Salão do Gabriel fica em São Paulo, no bairro da Liberdade. 😊 Quer agendar um horário pra conhecer? 😉"
+    },
+    {
+      "role": "user",
+      "content": "Sabe o endereço?"
+    },
+    {
+      "role": "assistant",
+      "content": "Sim! O endereço é R. T-27, 819 - St. Bueno, Goiânia - GO, 74210-030. 😉 Quer ver a localização no mapa? 😊\n\n[https://www.google.com/maps/place/Dr.+Gabriel+Terra/@-16.693934,-49.2933443,15z/data=!4m10!1m2!2m1!1sgabriel!3m6!1s0x935ef189527e46ad:0xd275f7d08d5d486b!8m2!3d-16.693934!4d-49.2742899!15sCgdnYWJyaWVskgESb3J0aG9wZWRpY19zdXJnZW9u4AEA!16s%2Fg%2F11hdy70fz0?entry=ttu&g_ep=EgoyMDI1MTEyMy4xIKXMDSoASAFQAw%3D%3D](https://www.google.com/maps/place/Dr.+Gabriel+Terra/@-16.693934,-49.2933443,15z/data=!4m10!1m2!2m1!1sgabriel!3m6!1s0x935ef189527e46ad:0xd275f7d08d5d486b!8m2!3d-16.693934!4d-49.2742899!15sCgdnYWJyaWVskgESb3J0aG9wZWRpY19zdXJnZW9u4AEA!16s%2Fg%2F11hdy70fz0?entry=ttu&g_ep=EgoyMDI1MTEyMy4xIKXMDSoASAFQAw%3D%3D)"
+    },
+    {
+      "role": "user",
+      "content": "Tá aí?"
+    },
+    {
+      "role": "assistant",
+      "content": "Oi! 😊 Sim, estou aqui! Em que posso te ajudar? 💖"
+    },
+    {
+      "role": "user",
+      "content": "Quero a localização no mapa"
+    },
+    {
+      "role": "assistant",
+      "content": "Sem problemas! 😊 É só clicar neste link:\n\n[https://www.google.com/maps/place/Dr.+Gabriel+Terra/@-16.693934,-49.2933443,15z/data=!4m10!1m2!2m1!1sgabriel!3m6!1s0x935ef189527e46ad:0xd275f7d08d5d486b!8m2!3d-16.693934!4d-49.2742899!15sCgdnYWJyaWVskgESb3J0aG9wZWRpY19zdXJnZW9u4AEA!16s%2Fg%2F11hdy70fz0?entry=ttu&g_ep=EgoyMDI1MTEyMy4xIKXMDSoASAFQAw%3D%3D](https://www.google.com/maps/place/Dr.+Gabriel+Terra/@-16.693934,-49.2933443,15z/data=!4m10!1m2!2m1!1sgabriel!3m6!1s0x935ef189527e46ad:0xd275f7d08d5d486b!8m2!3d-16.693934!4d-49.2742899!15sCgdnYWJyaWVskgESb3J0aG9wZWRpY19zdXJnZW9u4AEA!16s%2Fg%2F11hdy70fz0?entry=ttu&g_ep=EgoyMDI1MTEyMy4xIKXMDSoASAFQAw%3D%3D)\n\nMais alguma coisa? 😉"
     }
   ]
 }
