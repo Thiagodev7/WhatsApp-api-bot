@@ -1,65 +1,133 @@
-const fs = require('fs');
-const path = require('path');
+const db = require('../config/database');
+const { getRespostas } = require('../utils/respostaManager');
 
-const DB_PATH = path.join(process.cwd(), 'appointments.json');
-
-function loadDb() {
-    if (!fs.existsSync(DB_PATH)) return [];
-    try { return JSON.parse(fs.readFileSync(DB_PATH, 'utf8')); } catch (e) { return []; }
-}
-
-function saveDb(data) {
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
-}
-
+/**
+ * Busca horários disponíveis no banco, respeitando configurações e hora atual.
+ */
 async function getAvailableSlots(dateIso, options = {}) {
-    const { slotMinutes = 40, workStart = '09:00', workEnd = '19:00' } = options;
-    const appointments = loadDb();
+    // 1. Carrega configurações do Banco de Dados
+    const settings = await getRespostas();
+    const workStart = settings['config_inicio'] || '09:00'; // Padrão 09:00
+    const workEnd = settings['config_fim'] || '19:00';     // Padrão 19:00
     
-    const dayApps = appointments.filter(app => app.start.startsWith(dateIso));
-    const slots = [];
-    let current = new Date(`${dateIso}T${workStart}:00`);
-    const endOfDay = new Date(`${dateIso}T${workEnd}:00`);
-
-    while (current < endOfDay) {
-        const slotStart = new Date(current);
-        const slotEnd = new Date(current.getTime() + slotMinutes * 60000);
-        if (slotEnd > endOfDay) break;
-
-        const isBusy = dayApps.some(app => {
-            const appStart = new Date(app.start);
-            const appEnd = new Date(app.end);
-            return (slotStart < appEnd && slotEnd > appStart);
-        });
-
-        if (!isBusy) slots.push(slotStart.toTimeString().slice(0, 5));
-        current = slotEnd;
+    // Define duração: Prioridade Options > Config Banco > Padrão 40min
+    let slotMinutes = options.slotMinutes;
+    if (!slotMinutes) {
+        slotMinutes = parseInt(settings['config_duracao']) || 40;
     }
-    return slots;
+
+    // Define o intervalo do dia para busca
+    const startOfDay = `${dateIso} 00:00:00`;
+    const endOfDayStr = `${dateIso} 23:59:59`;
+
+    try {
+        // Busca agendamentos existentes no dia
+        const res = await db.query(
+            `SELECT start_time, end_time FROM appointments 
+             WHERE start_time >= $1 AND start_time <= $2`,
+            [startOfDay, endOfDayStr]
+        );
+
+        const dayApps = res.rows.map(row => ({
+            start: new Date(row.start_time),
+            end: new Date(row.end_time)
+        }));
+
+        const slots = [];
+        
+        // Gera os slots baseados no horário de inicio/fim configurado
+        let current = new Date(`${dateIso}T${workStart}:00`);
+        const endOfDay = new Date(`${dateIso}T${workEnd}:00`);
+        const now = new Date(); // Hora exata de agora
+
+        while (current < endOfDay) {
+            const slotStart = new Date(current);
+            const slotEnd = new Date(current.getTime() + slotMinutes * 60000);
+
+            if (slotEnd > endOfDay) break;
+
+            // --- LÓGICA DE BLOQUEIO DE PASSADO ---
+            // Se slotStart for menor que AGORA, pula (não mostra na lista)
+            if (slotStart < now) {
+                current = slotEnd;
+                continue;
+            }
+
+            // Verifica colisão com agendamentos existentes
+            const isBusy = dayApps.some(app => {
+                return (slotStart < app.end && slotEnd > app.start);
+            });
+
+            if (!isBusy) {
+                const timeString = slotStart.toTimeString().slice(0, 5);
+                slots.push(timeString);
+            }
+
+            current = slotEnd;
+        }
+
+        return slots;
+
+    } catch (error) {
+        console.error("Erro ao buscar slots:", error);
+        return [];
+    }
 }
 
 async function createAppointment({ summary, description, startDateTime, endDateTime }) {
-    const appointments = loadDb();
-    const newEvent = {
-        id: Date.now().toString(),
-        summary, description, start: startDateTime, end: endDateTime,
-        createdAt: new Date().toISOString()
-    };
-    appointments.push(newEvent);
-    saveDb(appointments);
-    return newEvent;
+    try {
+        const res = await db.query(
+            `INSERT INTO appointments (summary, description, start_time, end_time)
+             VALUES ($1, $2, $3, $4)
+             RETURNING id, summary, description, start_time, end_time, created_at`,
+            [summary, description, startDateTime, endDateTime]
+        );
+
+        const row = res.rows[0];
+        return {
+            id: row.id.toString(),
+            summary: row.summary,
+            description: row.description,
+            start: row.start_time.toISOString(),
+            end: row.end_time.toISOString(),
+            createdAt: row.created_at.toISOString()
+        };
+    } catch (error) {
+        console.error("Erro ao criar agendamento:", error);
+        throw error;
+    }
 }
 
-function getAllAppointments() {
-    return loadDb().sort((a, b) => new Date(a.start) - new Date(b.start));
+async function getAllAppointments() {
+    try {
+        const res = await db.query(
+            `SELECT id, summary, description, start_time, end_time, created_at 
+             FROM appointments 
+             ORDER BY start_time ASC`
+        );
+
+        return res.rows.map(row => ({
+            id: row.id.toString(),
+            summary: row.summary,
+            description: row.description,
+            start: row.start_time.toISOString(),
+            end: row.end_time.toISOString(),
+            createdAt: row.created_at.toISOString()
+        }));
+    } catch (error) {
+        console.error("Erro ao listar:", error);
+        return [];
+    }
 }
 
-function deleteAppointment(id) {
-    let apps = loadDb();
-    const initialLen = apps.length;
-    apps = apps.filter(a => a.id !== id);
-    saveDb(apps);
-    return apps.length < initialLen;
+async function deleteAppointment(id) {
+    try {
+        const res = await db.query('DELETE FROM appointments WHERE id = $1', [id]);
+        return res.rowCount > 0;
+    } catch (error) {
+        console.error("Erro ao deletar:", error);
+        return false;
+    }
 }
 
 module.exports = { getAvailableSlots, createAppointment, getAllAppointments, deleteAppointment };

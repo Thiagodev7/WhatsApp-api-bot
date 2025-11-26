@@ -8,7 +8,7 @@ const els = {
     statusText: document.getElementById('status-text'),
     totalApps: document.getElementById('total-apps'),
     totalMsgs: document.getElementById('total-msgs'),
-    agenda: document.getElementById('agenda-timeline'), // Alterado para a timeline
+    agenda: document.getElementById('agenda-timeline'), 
     recent: document.getElementById('recent-list'),
     configs: document.getElementById('config-list')
 };
@@ -23,10 +23,17 @@ function showTab(id, btn) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('view-'+id).classList.add('active');
-    if(btn) btn.classList.add('active');
+    
+    if(btn) {
+        btn.classList.add('active');
+        // CORREÇÃO DE TÍTULO: Pega o texto correto do botão
+        const title = btn.querySelector('span:last-child')?.innerText || btn.innerText;
+        document.getElementById('page-title').innerText = title;
+    } else {
+        document.getElementById('page-title').innerText = 'Dashboard';
+    }
     
     if(id === 'home' || id === 'agenda') refreshData();
-    document.getElementById('page-title').innerText = btn ? btn.innerText.trim() : 'Painel';
 }
 
 function authSettings(btn) {
@@ -182,23 +189,39 @@ socket.on('appointments_update', apps => {
     els.totalApps.innerText = apps.length;
     els.agenda.innerHTML = ''; 
     
-    // Update Recent List (Home)
+    // ATUALIZA A LISTA RECENTE (HOME) COM O NOVO DESIGN
     els.recent.innerHTML = '';
-    apps.slice(0, 4).forEach(a => {
-        // Card Simples para Home
+    
+    apps.slice(0, 6).forEach(a => {
         const d = new Date(a.start);
+        
+        const dia = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
+        const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        const parts = (a.summary || "Serviço - Cliente").split('-');
+        const servico = parts[0]?.trim();
+        const cliente = parts[1]?.trim() || "Cliente";
+        const inicial = cliente.charAt(0).toUpperCase();
+
         els.recent.innerHTML += `
-        <div class="app-card" style="padding:15px">
-            <div>
-                <div style="font-weight:700">${(a.summary||"").split('-')[1] || "Cliente"}</div>
-                <div style="font-size:0.8rem;color:var(--text-muted)">${d.getDate()}/${d.getMonth()+1} às ${d.getHours()}:${d.getMinutes()<10?'0':''}${d.getMinutes()}</div>
+        <div class="dashboard-card">
+            <div class="card-icon">${inicial}</div>
+            <div class="card-info">
+                <h4>${cliente}</h4>
+                <p>
+                    <span class="material-icons-round" style="font-size:14px; color:var(--primary);">event</span>
+                    ${dia} às ${hora}
+                </p>
             </div>
+            <div class="card-badge">${servico}</div>
         </div>`;
     });
+    
+    if(apps.length === 0) {
+        els.recent.innerHTML = '<p style="color:var(--text-muted); font-style:italic;">Nenhum cliente próximo.</p>';
+    }
 
     if(!apps.length) { els.agenda.innerHTML = '<div style="text-align:center;color:#999;padding:40px">Agenda vazia</div>'; return; }
 
-    // Agrupar por Data
     const groups = {};
     apps.forEach(app => {
         const d = new Date(app.start).toLocaleDateString('pt-BR', {weekday:'long', day:'numeric', month:'long'});
@@ -238,23 +261,84 @@ socket.on('appointments_update', apps => {
 
 function delApp(id) { if(confirm('Cancelar agendamento?')) socket.emit('delete_appointment', id); }
 
-// CONFIGS
+// --- CONFIGURAÇÕES INTELIGENTES (NOVO) ---
+
+const SPECIAL_KEYS = ['config_inicio', 'config_fim', 'config_duracao', 'config_prompt'];
+
 socket.on('knowledge_update', d => {
-    els.configs.innerHTML = '';
+    const listEl = document.getElementById('config-list');
+    listEl.innerHTML = ''; 
+
+    // 1. Preenche os campos Especiais (Bonitos)
+    if (d['config_inicio']) document.getElementById('setting-inicio').value = d['config_inicio'];
+    if (d['config_fim']) document.getElementById('setting-fim').value = d['config_fim'];
+    if (d['config_duracao']) document.getElementById('setting-duracao').value = d['config_duracao'];
+    if (d['config_prompt']) document.getElementById('setting-prompt').value = d['config_prompt'];
+
+    // 2. Preenche a lista genérica com o resto
     Object.keys(d).forEach(k => {
-        els.configs.innerHTML += `<div class="config-item">
-            <div><b>${k}</b><br><span style="font-size:0.8rem; color:var(--text-muted)">${d[k].substring(0,40)}...</span></div>
-            <button class="btn-icon" onclick="delConf('${k}')"><span class="material-icons-round">delete</span></button>
-        </div>`;
+        if (!SPECIAL_KEYS.includes(k)) {
+            const item = document.createElement('div');
+            item.className = 'mini-item';
+            item.innerHTML = `
+                <div>
+                    <span class="mini-key">${k}</span>: 
+                    <span class="mini-val">${d[k]}</span>
+                </div>
+                <button class="btn-icon" onclick="delConf('${k}')">
+                    <span class="material-icons-round" style="font-size:16px">close</span>
+                </button>
+            `;
+            listEl.appendChild(item);
+        }
     });
 });
 
-function fill(k,v) { document.getElementById('cfg-key').value=k; document.getElementById('cfg-val').value=v; }
-function saveConfig() { socket.emit('add_knowledge', {key:document.getElementById('cfg-key').value, value:document.getElementById('cfg-val').value}); showToast(); }
-function delConf(k) { if(confirm('Apagar?')) socket.emit('delete_knowledge', k); }
+// Salva Agenda ou IA
+function saveSpecialSettings(type) {
+    if (type === 'agenda') {
+        const inicio = document.getElementById('setting-inicio').value;
+        const fim = document.getElementById('setting-fim').value;
+        const duracao = document.getElementById('setting-duracao').value;
 
-function disconnectWhatsapp() { if(confirm('Desconectar?')) socket.emit('logout'); }
-function logout() { if(confirm('Reiniciar?')) socket.emit('logout'); }
-function showToast() { const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
+        if(inicio) socket.emit('add_knowledge', { key: 'config_inicio', value: inicio });
+        if(fim) socket.emit('add_knowledge', { key: 'config_fim', value: fim });
+        if(duracao) socket.emit('add_knowledge', { key: 'config_duracao', value: duracao });
+    }
+    
+    if (type === 'ia') {
+        const prompt = document.getElementById('setting-prompt').value;
+        if(prompt) socket.emit('add_knowledge', { key: 'config_prompt', value: prompt });
+    }
+    
+    showToast();
+}
+
+// Salva itens genéricos (preço, dúvidas)
+function saveGenericConfig() { 
+    const k = document.getElementById('cfg-key').value.trim();
+    const v = document.getElementById('cfg-val').value.trim();
+    
+    if(!k || !v) return alert("Preencha nome e resposta");
+
+    socket.emit('add_knowledge', { key: k, value: v }); 
+    
+    document.getElementById('cfg-key').value = '';
+    document.getElementById('cfg-val').value = '';
+    showToast(); 
+}
+
+function delConf(k) { 
+    if(confirm('Remover "' + k + '"?')) socket.emit('delete_knowledge', k); 
+}
+
+function disconnectWhatsapp() { if(confirm('Desconectar e limpar sessão?')) socket.emit('logout'); }
+function logout() { if(confirm('Reiniciar o sistema?')) socket.emit('logout'); }
+
+function showToast() { 
+    const t = document.getElementById('toast'); 
+    t.classList.add('show'); 
+    setTimeout(()=>t.classList.remove('show'), 2000); 
+}
 
 refreshData();

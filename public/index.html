@@ -62,7 +62,8 @@
                 <div class="widget"><span class="widget-label">Status</span><div class="widget-value" style="color:var(--success);">Ativo</div></div>
             </div>
             <h3 style="margin-bottom:20px;">Próximos Clientes</h3>
-            <div id="recent-list" class="agenda-grid"></div>
+            <div id="recent-list" class="agenda-grid">
+                </div>
         </div>
 
         <div id="view-agenda" class="view" style="padding: 30px 40px;">
@@ -72,7 +73,7 @@
                         <span class="material-icons-round">refresh</span> Atualizar Agenda
                     </button>
                     <div class="cal-widget">
-                        <div class="cal-header"><span>Novembro 2025</span></div>
+                        <div class="cal-header"><span>Calendário</span></div>
                         <div class="cal-grid">
                             <span>D</span><span>S</span><span>T</span><span>Q</span><span>Q</span><span>S</span><span>S</span>
                             <span class="cal-day">1</span><span class="cal-day">2</span><span class="cal-day">3</span><span class="cal-day">4</span><span class="cal-day">5</span><span class="cal-day">6</span><span class="cal-day">7</span>
@@ -80,11 +81,6 @@
                             <span class="cal-day">15</span><span class="cal-day">16</span><span class="cal-day">17</span><span class="cal-day">18</span><span class="cal-day">19</span><span class="cal-day has-event">20</span><span class="cal-day">21</span>
                             <span class="cal-day">22</span><span class="cal-day">23</span><span class="cal-day">24</span><span class="cal-day has-event">25</span><span class="cal-day active">26</span><span class="cal-day">27</span><span class="cal-day">28</span>
                         </div>
-                    </div>
-                    <div class="widget" style="text-align:center;">
-                        <span style="font-size:3rem;">📅</span>
-                        <h3 style="margin-top:10px;">Hoje</h3>
-                        <p style="color:var(--text-muted);">Você tem clientes agendados.</p>
                     </div>
                 </div>
                 <div class="timeline-container" id="agenda-timeline">
@@ -119,21 +115,64 @@
         </div>
 
         <div id="view-settings" class="view" style="padding: 30px 40px;">
-            <div class="settings-grid">
+            <h3 style="margin-bottom: 20px;">Configurações do Sistema</h3>
+            
+            <div class="settings-grid-layout">
                 <div class="settings-card">
-                    <h3>Personalizar IA</h3><br>
-                    <div class="shortcuts">
-                        <div class="pill" onclick="fill('config_prompt', 'Você é a assistente...')">🤖 Personalidade</div>
-                        <div class="pill" onclick="fill('config_numeros', '5511...')">🚫 Bloqueio</div>
-                        <div class="pill" onclick="fill('corte', 'R$ 50')">✂️ Serviço</div>
+                    <div class="card-header">
+                        <span class="material-icons-round icon-bg">schedule</span>
+                        <h4>Agenda e Horários</h4>
                     </div>
-                    <input id="cfg-key" class="input" placeholder="Chave">
-                    <textarea id="cfg-val" class="input textarea" placeholder="Valor"></textarea>
-                    <button class="btn btn-primary" onclick="saveConfig()">Salvar</button>
-                    <div id="config-list" style="margin-top:20px;"></div>
+                    <div class="form-group-row">
+                        <div class="form-group">
+                            <label>Abertura</label>
+                            <input type="time" id="setting-inicio" class="input">
+                        </div>
+                        <div class="form-group">
+                            <label>Fechamento</label>
+                            <input type="time" id="setting-fim" class="input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Duração Padrão do Serviço (minutos)</label>
+                        <input type="number" id="setting-duracao" class="input" placeholder="Ex: 40">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSpecialSettings('agenda')">Salvar Horários</button>
                 </div>
+
+                <div class="settings-card" style="grid-row: span 2;">
+                    <div class="card-header">
+                        <span class="material-icons-round icon-bg">psychology</span>
+                        <h4>Inteligência Artificial</h4>
+                    </div>
+                    <div class="form-group">
+                        <label>Personalidade e Regras (Prompt)</label>
+                        <p class="help-text">Descreva como o bot deve agir, o nome da loja e as regras de negócio.</p>
+                        <textarea id="setting-prompt" class="input textarea-large" placeholder="Ex: Você é a atendente virtual..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSpecialSettings('ia')">Atualizar Cérebro</button>
+                </div>
+
                 <div class="settings-card">
-                    <h3>Sistema</h3><br>
+                    <div class="card-header">
+                        <span class="material-icons-round icon-bg">list</span>
+                        <h4>Outras Informações</h4>
+                    </div>
+                    <p class="help-text">Adicione preços ou respostas rápidas aqui.</p>
+                    <div class="form-group-row">
+                        <input id="cfg-key" class="input" placeholder="Nome (ex: corte)">
+                        <input id="cfg-val" class="input" placeholder="Resposta (ex: R$ 50)">
+                    </div>
+                    <button class="btn btn-secondary" onclick="saveGenericConfig()">Adicionar</button>
+                    
+                    <div id="config-list" class="mini-list"></div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="card-header">
+                        <span class="material-icons-round icon-bg danger">power_settings_new</span>
+                        <h4>Zona de Perigo</h4>
+                    </div>
                     <button class="btn btn-danger" onclick="disconnectWhatsapp()">Desconectar WhatsApp</button>
                 </div>
             </div>
