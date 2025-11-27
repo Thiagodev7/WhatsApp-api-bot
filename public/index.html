@@ -62,8 +62,7 @@
                 <div class="widget"><span class="widget-label">Status</span><div class="widget-value" style="color:var(--success);">Ativo</div></div>
             </div>
             <h3 style="margin-bottom:20px;">Próximos Clientes</h3>
-            <div id="recent-list" class="agenda-grid">
-                </div>
+            <div id="recent-list" class="agenda-grid"></div>
         </div>
 
         <div id="view-agenda" class="view" style="padding: 30px 40px;">
@@ -134,7 +133,7 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>Duração Padrão do Serviço (minutos)</label>
+                        <label>Duração Padrão (minutos)</label>
                         <input type="number" id="setting-duracao" class="input" placeholder="Ex: 40">
                     </div>
                     <button class="btn btn-primary" onclick="saveSpecialSettings('agenda')">Salvar Horários</button>
@@ -155,15 +154,42 @@
 
                 <div class="settings-card">
                     <div class="card-header">
+                        <span class="material-icons-round icon-bg">lock</span>
+                        <h4>Segurança (Whitelist)</h4>
+                    </div>
+                    <div class="form-group">
+                        <label>Números Permitidos</label>
+                        <p class="help-text">Separe por vírgula. Deixe vazio para responder a todos.<br>Ex: 5511999999999, 5521888888888</p>
+                        <textarea id="setting-numeros" class="input textarea-medium" placeholder="55..."></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSpecialSettings('seguranca')">Salvar Lista</button>
+                </div>
+
+                <div class="settings-card">
+                    <div class="card-header">
                         <span class="material-icons-round icon-bg">list</span>
                         <h4>Outras Informações</h4>
                     </div>
-                    <p class="help-text">Adicione preços ou respostas rápidas aqui.</p>
-                    <div class="form-group-row">
-                        <input id="cfg-key" class="input" placeholder="Nome (ex: corte)">
-                        <input id="cfg-val" class="input" placeholder="Resposta (ex: R$ 50)">
+                    <p class="help-text">Adicione preços, endereços ou respostas rápidas.</p>
+                    
+                    <div class="form-group">
+                        <label>Nome da Chave</label>
+                        <input id="cfg-key" class="input" placeholder="Ex: pix, endereco, corte...">
                     </div>
-                    <button class="btn btn-secondary" onclick="saveGenericConfig()">Adicionar</button>
+                    
+                    <div class="form-group">
+                        <label>Resposta Completa</label>
+                        <textarea id="cfg-val" class="input textarea-medium" placeholder="Digite o texto completo aqui..."></textarea>
+                    </div>
+
+                    <div class="action-buttons">
+                        <button id="btn-save-generic" class="btn btn-secondary" onclick="saveGenericConfig()">
+                            <span class="material-icons-round">add</span> Adicionar
+                        </button>
+                        <button id="btn-cancel-edit" class="btn btn-danger" onclick="cancelEdit()" style="display: none;">
+                            <span class="material-icons-round">close</span>
+                        </button>
+                    </div>
                     
                     <div id="config-list" class="mini-list"></div>
                 </div>

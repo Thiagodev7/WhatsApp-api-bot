@@ -32,7 +32,11 @@ async function replyAndLog(message, text) {
   catch (e) { console.error('Erro envio:', e); }
 }
 
+// Remove acentos e deixa minúsculo
 function normalize(text) { return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+
+// Remove tudo que não for número (para comparar telefones corretamente)
+function cleanNumber(num) { return num.replace(/\D/g, ''); }
 
 async function handleIncomingMessage(client, message) {
   try {
@@ -42,7 +46,7 @@ async function handleIncomingMessage(client, message) {
     const text = (message.body || '').trim();
     if (!text) return;
 
-    const phone = from.replace('@c.us', '');
+    const phone = from.replace('@c.us', ''); // Ex: 5511999999999
     
     // CARREGA MEMÓRIA
     await loadMemory(phone);
@@ -50,14 +54,21 @@ async function handleIncomingMessage(client, message) {
 
     const db = await getCachedDb(); 
 
-    // 1. Segurança
-    const allowed = db['config_numeros'] || ''; 
-    if (allowed.trim()) {
-        const list = allowed.split(',').map(n => n.trim());
-        if (!list.includes(phone)) return; 
+    // 1. SEGURANÇA (WHITELIST)
+    // Se houver números configurados, só responde a eles.
+    const allowedRaw = db['config_numeros'] || ''; 
+    if (allowedRaw.trim()) {
+        // Limpa a lista (remove traços, espaços, parênteses) para comparar apenas números
+        const allowedList = allowedRaw.split(',').map(n => cleanNumber(n));
+        
+        // Se o telefone de quem mandou msg NÃO estiver na lista, IGNORA (return)
+        if (!allowedList.includes(phone)) {
+            console.log(`🚫 Bloqueado: ${phone} não está na lista de permitidos.`);
+            return; 
+        }
     }
 
-    // 2. Limites
+    // 2. Limites Diários
     resetUsageIfNewDay();
     const limitMsg = parseInt(db['config_limite_msg']) || 200;
     if (usage.messages >= limitMsg) return;
@@ -68,7 +79,7 @@ async function handleIncomingMessage(client, message) {
     const norm = normalize(text);
     let state = getState(from);
 
-    // GATILHOS DE ADMIN
+    // GATILHOS DE ADMIN (!add chave = valor)
     if (norm.startsWith('!add ')) {
         const p = text.substring(5).split('=');
         if (p.length===2) { 
@@ -86,7 +97,7 @@ async function handleIncomingMessage(client, message) {
     // Envia para o Gemini
     let reply = await generateReply(history, phone);
 
-    // 4. Verifica Ação JSON
+    // 4. Verifica Ação JSON (Agendamento)
     try {
         if (reply.trim().startsWith('{') && reply.trim().endsWith('}')) {
             const command = JSON.parse(reply);
@@ -94,28 +105,26 @@ async function handleIncomingMessage(client, message) {
             if (command.action === 'AGENDAR') {
                 const startIso = `${command.data}T${command.hora}:00`;
                 
-                // --- ALTERAÇÃO: Pega duração do banco ou usa 40 como fallback ---
+                // Pega duração do banco ou usa 40 min padrão
                 let duration = parseInt(db['config_duracao']) || 40;
                 
-                // Lógica extra para serviços específicos (opcional)
+                // Exemplo de exceção para serviços demorados
                 if(command.servico && command.servico.toLowerCase().includes('mechas')) duration = 120;
 
-                // Verifica disponibilidade no banco (passando a duração correta)
+                // Verifica disponibilidade
                 const slots = await getAvailableSlots(command.data, { slotMinutes: duration });
                 
-                // SE O HORÁRIO ESTIVER OCUPADO OU INVÁLIDO
                 if (!slots.includes(command.hora)) {
-                     const horariosLivres = slots.length > 0 ? slots.join(', ') : "Nenhum horário livre para este dia.";
-                     const sysMsg = `Sistema: O horário ${command.hora} NÃO está disponível (ocupado ou passado). Horários livres: [ ${horariosLivres} ]. Peça para escolher outro.`;
+                     const horariosLivres = slots.length > 0 ? slots.join(', ') : "Sem horários livres.";
+                     const sysMsg = `Sistema: O horário ${command.hora} está ocupado, passado ou inválido. Horários livres: [ ${horariosLivres} ]. Peça para escolher outro.`;
                      
                      history.push({ role: 'user', content: sysMsg });
-                     console.log("⚠️ Conflito de horário. Avisando IA:", sysMsg);
+                     console.log("⚠️ Conflito de horário. Avisando IA.");
                      
-                     // Nova tentativa com a IA
+                     // Tenta gerar nova resposta com o aviso de erro
                      reply = await generateReply(history, phone); 
-
                 } else {
-                    // Horário LIVRE -> Agendar
+                    // Agendar
                     const endIso = new Date(new Date(startIso).getTime() + duration*60000).toISOString();
                     
                     await createAppointment({
@@ -125,7 +134,7 @@ async function handleIncomingMessage(client, message) {
                         endDateTime: endIso
                     });
 
-                    const confirm = `✅ *Agendado com Sucesso!* \n\n🗓️ Data: ${new Date(startIso).toLocaleDateString('pt-BR')}\n⏰ Horário: ${command.hora}\n✂️ Serviço: ${command.servico}\n\nTe aguardamos!`;
+                    const confirm = `✅ *Agendado com Sucesso!* \n\n🗓️ Data: ${new Date(startIso).toLocaleDateString('pt-BR')}\n⏰ Horário: ${command.hora}\n✂️ Serviço: ${command.servico}`;
                     
                     history.push({ role: 'assistant', content: confirm });
                     saveHistory(from, history.slice(-MAX_HISTORY));

@@ -8,7 +8,7 @@ const els = {
     statusText: document.getElementById('status-text'),
     totalApps: document.getElementById('total-apps'),
     totalMsgs: document.getElementById('total-msgs'),
-    agenda: document.getElementById('agenda-timeline'), 
+    agenda: document.getElementById('agenda-timeline'),
     recent: document.getElementById('recent-list'),
     configs: document.getElementById('config-list')
 };
@@ -26,7 +26,6 @@ function showTab(id, btn) {
     
     if(btn) {
         btn.classList.add('active');
-        // CORREÇÃO DE TÍTULO: Pega o texto correto do botão
         const title = btn.querySelector('span:last-child')?.innerText || btn.innerText;
         document.getElementById('page-title').innerText = title;
     } else {
@@ -59,9 +58,9 @@ socket.on('qr', src => {
 });
 socket.on('ready', () => { els.qr.style.display='none'; setStatus(true); });
 
-// --- SISTEMA DE CHAT INTELIGENTE ---
+// --- SISTEMA DE CHAT ---
 socket.on('log_history', lines => {
-    conversations = {}; // Reinicia memória local
+    conversations = {}; 
     lines.forEach(processLine);
     renderContacts();
 });
@@ -69,10 +68,10 @@ socket.on('log_history', lines => {
 socket.on('file_log', line => {
     const msg = processLine(line);
     if(msg) {
-        renderContacts(); // Reordena lista
+        renderContacts(); 
         if(activeChatId === msg.chatId) {
-            renderMessage(msg); // Adiciona se aberto
-            scrollToBottom(); // ROLA AUTOMATICAMENTE AQUI
+            renderMessage(msg); 
+            scrollToBottom();
         }
     }
 });
@@ -87,11 +86,7 @@ function processLine(line) {
 
     if(['ADMIN', 'WARN', 'ERROR', 'BOOT', 'SUCCESS'].includes(type)) return null;
 
-    const msg = {
-        text: content,
-        time: time,
-        fromMe: type === 'RESPONDIDO'
-    };
+    const msg = { text: content, time: time, fromMe: type === 'RESPONDIDO' };
 
     if(!conversations[chatId]) conversations[chatId] = [];
     conversations[chatId].push(msg);
@@ -139,7 +134,6 @@ function renderContacts() {
 function loadChat(id) {
     activeChatId = id;
     renderContacts();
-    
     document.getElementById('chat-header-bar').style.display = 'flex';
     document.getElementById('active-name').innerText = id;
     document.getElementById('active-avatar').innerText = id.slice(-2);
@@ -147,7 +141,6 @@ function loadChat(id) {
     const feed = els.chatFeed;
     feed.innerHTML = '';
     conversations[id].forEach(renderMessage);
-    
     setTimeout(scrollToBottom, 50);
     
     if(window.innerWidth < 900) {
@@ -182,19 +175,16 @@ function filterContacts(term) {
     });
 }
 
-// --- AGENDA PRO LOGIC ---
+// --- AGENDA ---
 function refreshData() { socket.emit('request_appointments'); }
 
 socket.on('appointments_update', apps => {
     els.totalApps.innerText = apps.length;
     els.agenda.innerHTML = ''; 
     
-    // ATUALIZA A LISTA RECENTE (HOME) COM O NOVO DESIGN
     els.recent.innerHTML = '';
-    
     apps.slice(0, 6).forEach(a => {
         const d = new Date(a.start);
-        
         const dia = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' });
         const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         const parts = (a.summary || "Serviço - Cliente").split('-');
@@ -216,10 +206,7 @@ socket.on('appointments_update', apps => {
         </div>`;
     });
     
-    if(apps.length === 0) {
-        els.recent.innerHTML = '<p style="color:var(--text-muted); font-style:italic;">Nenhum cliente próximo.</p>';
-    }
-
+    if(apps.length === 0) els.recent.innerHTML = '<p style="color:var(--text-muted); font-style:italic;">Nenhum cliente próximo.</p>';
     if(!apps.length) { els.agenda.innerHTML = '<div style="text-align:center;color:#999;padding:40px">Agenda vazia</div>'; return; }
 
     const groups = {};
@@ -261,32 +248,34 @@ socket.on('appointments_update', apps => {
 
 function delApp(id) { if(confirm('Cancelar agendamento?')) socket.emit('delete_appointment', id); }
 
-// --- CONFIGURAÇÕES INTELIGENTES (NOVO) ---
+// --- CONFIGURAÇÕES ---
 
-const SPECIAL_KEYS = ['config_inicio', 'config_fim', 'config_duracao', 'config_prompt'];
+const SPECIAL_KEYS = ['config_inicio', 'config_fim', 'config_duracao', 'config_prompt', 'config_numeros'];
 
 socket.on('knowledge_update', d => {
     const listEl = document.getElementById('config-list');
     listEl.innerHTML = ''; 
 
-    // 1. Preenche os campos Especiais (Bonitos)
     if (d['config_inicio']) document.getElementById('setting-inicio').value = d['config_inicio'];
     if (d['config_fim']) document.getElementById('setting-fim').value = d['config_fim'];
     if (d['config_duracao']) document.getElementById('setting-duracao').value = d['config_duracao'];
     if (d['config_prompt']) document.getElementById('setting-prompt').value = d['config_prompt'];
+    if (d['config_numeros']) document.getElementById('setting-numeros').value = d['config_numeros'];
 
-    // 2. Preenche a lista genérica com o resto
     Object.keys(d).forEach(k => {
         if (!SPECIAL_KEYS.includes(k)) {
+            const val = d[k];
             const item = document.createElement('div');
             item.className = 'mini-item';
+            item.id = `item-${k}`;
+            
             item.innerHTML = `
-                <div>
-                    <span class="mini-key">${k}</span>: 
-                    <span class="mini-val">${d[k]}</span>
+                <div class="mini-content" onclick="startEdit('${k}', \`${val.replace(/`/g, '\\`')}\`)">
+                    <span class="mini-key">${k}</span>
+                    <span class="mini-val">${val}</span>
                 </div>
-                <button class="btn-icon" onclick="delConf('${k}')">
-                    <span class="material-icons-round" style="font-size:16px">close</span>
+                <button class="btn-mini-delete" onclick="delConf('${k}')">
+                    <span class="material-icons-round">delete</span>
                 </button>
             `;
             listEl.appendChild(item);
@@ -294,7 +283,31 @@ socket.on('knowledge_update', d => {
     });
 });
 
-// Salva Agenda ou IA
+function startEdit(key, value) {
+    document.getElementById('cfg-key').value = key;
+    document.getElementById('cfg-val').value = value;
+    const btn = document.getElementById('btn-save-generic');
+    btn.innerHTML = '<span class="material-icons-round">save</span> Atualizar';
+    btn.classList.remove('btn-secondary');
+    btn.classList.add('btn-primary');
+    document.getElementById('btn-cancel-edit').style.display = 'inline-flex';
+    document.querySelectorAll('.mini-item').forEach(i => i.classList.remove('editing'));
+    const activeItem = document.getElementById(`item-${key}`);
+    if(activeItem) activeItem.classList.add('editing');
+    document.getElementById('cfg-val').focus();
+}
+
+function cancelEdit() {
+    document.getElementById('cfg-key').value = '';
+    document.getElementById('cfg-val').value = '';
+    const btn = document.getElementById('btn-save-generic');
+    btn.innerHTML = '<span class="material-icons-round">add</span> Adicionar';
+    btn.classList.add('btn-secondary');
+    btn.classList.remove('btn-primary');
+    document.getElementById('btn-cancel-edit').style.display = 'none';
+    document.querySelectorAll('.mini-item').forEach(i => i.classList.remove('editing'));
+}
+
 function saveSpecialSettings(type) {
     if (type === 'agenda') {
         const inicio = document.getElementById('setting-inicio').value;
@@ -305,40 +318,29 @@ function saveSpecialSettings(type) {
         if(fim) socket.emit('add_knowledge', { key: 'config_fim', value: fim });
         if(duracao) socket.emit('add_knowledge', { key: 'config_duracao', value: duracao });
     }
-    
     if (type === 'ia') {
         const prompt = document.getElementById('setting-prompt').value;
         if(prompt) socket.emit('add_knowledge', { key: 'config_prompt', value: prompt });
     }
-    
+    if (type === 'seguranca') {
+        const nums = document.getElementById('setting-numeros').value;
+        socket.emit('add_knowledge', { key: 'config_numeros', value: nums });
+    }
     showToast();
 }
 
-// Salva itens genéricos (preço, dúvidas)
 function saveGenericConfig() { 
     const k = document.getElementById('cfg-key').value.trim();
     const v = document.getElementById('cfg-val').value.trim();
-    
     if(!k || !v) return alert("Preencha nome e resposta");
-
     socket.emit('add_knowledge', { key: k, value: v }); 
-    
-    document.getElementById('cfg-key').value = '';
-    document.getElementById('cfg-val').value = '';
+    cancelEdit(); 
     showToast(); 
 }
 
-function delConf(k) { 
-    if(confirm('Remover "' + k + '"?')) socket.emit('delete_knowledge', k); 
-}
-
+function delConf(k) { if(confirm('Remover "' + k + '"?')) socket.emit('delete_knowledge', k); }
 function disconnectWhatsapp() { if(confirm('Desconectar e limpar sessão?')) socket.emit('logout'); }
 function logout() { if(confirm('Reiniciar o sistema?')) socket.emit('logout'); }
-
-function showToast() { 
-    const t = document.getElementById('toast'); 
-    t.classList.add('show'); 
-    setTimeout(()=>t.classList.remove('show'), 2000); 
-}
+function showToast() { const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2000); }
 
 refreshData();
