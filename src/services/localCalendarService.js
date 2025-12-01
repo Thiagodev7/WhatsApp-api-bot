@@ -36,15 +36,24 @@ async function getAvailableSlots(dateIso, options = {}) {
             const slotEnd = new Date(current.getTime() + slotMinutes * 60000);
 
             if (slotEnd > endOfDay) break;
-            if (slotStart < now) { current = slotEnd; continue; }
 
-            const isBusy = dayApps.some(app => (slotStart < app.end && slotEnd > app.start));
+            if (slotStart < now) {
+                current = slotEnd;
+                continue;
+            }
+
+            const isBusy = dayApps.some(app => {
+                return (slotStart < app.end && slotEnd > app.start);
+            });
 
             if (!isBusy) {
-                slots.push(slotStart.toTimeString().slice(0, 5));
+                const timeString = slotStart.toTimeString().slice(0, 5);
+                slots.push(timeString);
             }
+
             current = slotEnd;
         }
+
         return slots;
 
     } catch (error) {
@@ -53,61 +62,85 @@ async function getAvailableSlots(dateIso, options = {}) {
     }
 }
 
-// --- CRIAÇÃO CORRETA COM NOVOS CAMPOS ---
-async function createAppointment({ clientName, serviceName, clientPhone, startDateTime, endDateTime }) {
+async function createAppointment({ clientName, serviceName, clientPhone, status, startDateTime, endDateTime }) {
     try {
-        // Mantemos o summary como backup visual, mas salvamos os dados reais nas colunas certas
         const summary = `${serviceName} - ${clientName}`;
-        
         const res = await db.query(
             `INSERT INTO appointments (
                 client_name, service_name, client_phone, 
                 summary, description, status, 
                 start_time, end_time
             )
-             VALUES ($1, $2, $3, $4, 'Via Bot', 'agendado', $5, $6)
+             VALUES ($1, $2, $3, $4, 'Via Bot', $5, $6, $7)
              RETURNING *`,
-            [clientName, serviceName, clientPhone, summary, startDateTime, endDateTime]
+            [clientName, serviceName, clientPhone, summary, status || 'agendado', startDateTime, endDateTime]
         );
 
         const row = res.rows[0];
-        return {
-            id: row.id.toString(),
-            client: row.client_name,
-            service: row.service_name,
-            phone: row.client_phone,
-            status: row.status,
-            start: row.start_time.toISOString(),
-            end: row.end_time.toISOString()
-        };
+        return mapRow(row);
     } catch (error) {
         console.error("Erro ao criar agendamento:", error);
         throw error;
     }
 }
 
-// --- LISTAGEM CORRETA ---
 async function getAllAppointments() {
     try {
         const res = await db.query(
-            `SELECT id, client_name, service_name, client_phone, status, start_time, end_time, summary
-             FROM appointments 
-             ORDER BY start_time ASC`
+            `SELECT * FROM appointments ORDER BY start_time ASC`
         );
-
-        return res.rows.map(row => ({
-            id: row.id.toString(),
-            client: row.client_name,   // Novo campo
-            service: row.service_name, // Novo campo
-            phone: row.client_phone,   // Novo campo
-            status: row.status,
-            summary: row.summary,      // Mantido para compatibilidade
-            start: row.start_time.toISOString(),
-            end: row.end_time.toISOString()
-        }));
+        return res.rows.map(mapRow);
     } catch (error) {
         console.error("Erro ao listar:", error);
         return [];
+    }
+}
+
+async function updateAppointmentStatus(id, status) {
+    try {
+        await db.query('UPDATE appointments SET status = $1 WHERE id = $2', [status, id]);
+        return true;
+    } catch (error) {
+        console.error("Erro ao atualizar status:", error);
+        return false;
+    }
+}
+
+// --- [ALTERAÇÃO IMPORTANTE AQUI] ---
+// Lógica inteligente para achar o agendamento certo
+async function findPendingAppointment(phone) {
+    try {
+        // 1. Prioridade: Busca um agendamento que esteja com status 'aguardando'
+        // (Ou seja, o sistema acabou de mandar o lembrete automático para ele)
+        let res = await db.query(
+            `SELECT * FROM appointments 
+             WHERE client_phone = $1 
+             AND status = 'aguardando'
+             ORDER BY start_time ASC 
+             LIMIT 1`,
+            [phone]
+        );
+        
+        if (res.rows.length > 0) return mapRow(res.rows[0]);
+
+        // 2. Fallback: Se não tiver nenhum 'aguardando', busca o próximo 'agendado' futuro
+        // Útil se o cliente confirmar espontaneamente antes do lembrete
+        res = await db.query(
+            `SELECT * FROM appointments 
+             WHERE client_phone = $1 
+             AND status = 'agendado'
+             AND start_time > NOW()
+             ORDER BY start_time ASC 
+             LIMIT 1`,
+            [phone]
+        );
+
+        if (res.rows.length > 0) return mapRow(res.rows[0]);
+
+        return null;
+    } catch (error) {
+        console.error("Erro ao buscar pendente:", error);
+        return null;
     }
 }
 
@@ -121,4 +154,18 @@ async function deleteAppointment(id) {
     }
 }
 
-module.exports = { getAvailableSlots, createAppointment, getAllAppointments, deleteAppointment };
+function mapRow(row) {
+    return {
+        id: row.id.toString(),
+        client: row.client_name,
+        service: row.service_name,
+        phone: row.client_phone,
+        status: row.status,
+        summary: row.summary,
+        start: row.start_time.toISOString(),
+        end: row.end_time.toISOString(),
+        createdAt: row.created_at.toISOString()
+    };
+}
+
+module.exports = { getAvailableSlots, createAppointment, getAllAppointments, deleteAppointment, updateAppointmentStatus, findPendingAppointment };

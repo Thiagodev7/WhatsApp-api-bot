@@ -6,9 +6,10 @@ const { createWhatsappClient } = require('./services/whatsappService');
 require('./config/env');
 const { handleIncomingMessage } = require('./handlers/messageHandler');
 const { getRespostas, addResposta, removeResposta } = require('./utils/respostaManager');
-const { getAllAppointments, deleteAppointment } = require('./services/localCalendarService');
+const { getAllAppointments, deleteAppointment, updateAppointmentStatus } = require('./services/localCalendarService');
 const { LOG_FILE, logSystem } = require('./utils/logger');
-const initDb = require('./utils/initDb'); // <--- IMPORTANTE
+const initDb = require('./utils/initDb'); 
+const { initScheduler } = require('./services/schedulerService'); // <--- NOVO IMPORT
 
 const app = express();
 const server = http.createServer(app);
@@ -39,7 +40,16 @@ function readLastLogs(cb) {
 function startWhatsappBot() {
     if (client) { try { client.removeAllListeners(); } catch(e){} }
     client = createWhatsappClient(handleIncomingMessage, io);
-    client.on('ready', () => { isClientReady = true; logSystem('Bot conectado.', 'SUCCESS'); });
+    
+    client.on('ready', () => { 
+        isClientReady = true; 
+        logSystem('Bot conectado.', 'SUCCESS');
+        
+        // --- INICIA O AGENDADOR DE LEMBRETES ---
+        initScheduler(client, io); 
+        console.log('🕒 Sistema de Lembretes Automáticos Ativado');
+    });
+    
     client.on('disconnected', (r) => { 
         isClientReady = false; logSystem(`Desconectado: ${r}`, 'WARN'); 
         setTimeout(startWhatsappBot, 5000); 
@@ -52,7 +62,7 @@ io.on('connection', (socket) => {
 
     socket.on('auth_request', (p) => socket.emit(p === ADMIN_PASSWORD ? 'auth_success' : 'auth_fail'));
 
-    // Configs (Agora Assíncronas)
+    // Configs
     socket.on('request_knowledge', async () => socket.emit('knowledge_update', await getRespostas()));
     
     socket.on('add_knowledge', async (d) => { 
@@ -77,6 +87,26 @@ io.on('connection', (socket) => {
         }
     });
 
+    // Envio Manual de Lembrete (Botão Sininho)
+    socket.on('send_reminder', async (data) => {
+        if (!client || !isClientReady) return socket.emit('operation_fail', 'Bot desconectado!');
+        
+        const chatId = data.phone.includes('@') ? data.phone : `${data.phone}@c.us`;
+        const msg = `Olá ${data.client}! 👋\n\nPassando para lembrar do seu horário:\n🗓️ *${data.date}* às *${data.time}*\n\nConfirma sua presença?`;
+
+        try {
+            await client.sendMessage(chatId, msg);
+            await updateAppointmentStatus(data.id, 'aguardando');
+            
+            io.emit('appointments_update', await getAllAppointments());
+            socket.emit('operation_success', 'Lembrete enviado!');
+            logSystem(`Lembrete MANUAL enviado para ${data.client}`, 'INFO');
+        } catch (e) {
+            console.error('Erro ao enviar lembrete:', e);
+            socket.emit('operation_fail', 'Erro ao enviar.');
+        }
+    });
+
     socket.on('logout', async () => {
         logSystem('Reiniciando...', 'ADMIN');
         if (client) { try { await client.logout(); await client.destroy(); } catch(e){} }
@@ -85,7 +115,7 @@ io.on('connection', (socket) => {
 });
 
 async function main() {
-  await initDb(); // <--- INICIA BANCO
+  await initDb();
   logSystem('=== SISTEMA INICIADO ===', 'BOOT');
   startWhatsappBot();
   const PORT = process.env.PORT || 3001; 

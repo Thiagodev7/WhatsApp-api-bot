@@ -17,6 +17,7 @@ let conversations = {};
 let activeChatId = null;
 let msgCount = 0;
 
+// ... (funções showTab, authSettings, sockets gerais, chat permanecem iguais) ...
 function showTab(id, btn) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -109,7 +110,9 @@ function scrollToBottom() { const feed = document.getElementById('chat-feed'); i
 function closeChatMobile() { document.querySelector('.chat-sidebar').style.display = 'flex'; document.querySelector('.chat-main').style.display = 'none'; activeChatId = null; }
 function filterContacts(term) { document.querySelectorAll('.contact-item').forEach(i => { const name = i.querySelector('.contact-name').innerText; i.style.display = name.includes(term) ? 'flex' : 'none'; }); }
 
-// AGENDA
+
+// --- AGENDA E LEMBRETES ---
+
 function refreshData() { socket.emit('request_appointments'); }
 function formatPhone(phone) {
     if (!phone) return 'Sem número';
@@ -132,8 +135,8 @@ socket.on('appointments_update', apps => {
         const hora = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         const cliente = a.client || (a.summary ? a.summary.split('-')[1]?.trim() : "Cliente");
         const inicial = cliente.charAt(0).toUpperCase();
-        let statusColor = '#6366f1'; 
-        let statusText = 'Agendado';
+        
+        let statusColor = '#6366f1'; let statusText = 'Agendado';
         if(a.status === 'confirmado') { statusColor = '#10b981'; statusText = 'Confirmado'; }
         if(a.status === 'aguardando') { statusColor = '#f59e0b'; statusText = 'Aguardando'; }
         if(a.status === 'concluido')  { statusColor = '#64748b'; statusText = 'Concluído'; }
@@ -151,10 +154,11 @@ socket.on('appointments_update', apps => {
     });
 
     Object.keys(groups).forEach(dateKey => {
-        let html = `<div class="date-group"><div class="date-header"><span class="material-icons-round" style="font-size:18px">calendar_today</span> ${dateKey.charAt(0).toUpperCase() + dateKey.slice(1)}</div>`;
+        let html = `<div class="date-group"><div class="date-header"><span class="material-icons-round" style="font-size:18px">calendar_today</span> ${dateKey}</div>`;
         groups[dateKey].forEach(a => {
             const t = new Date(a.start);
             const timeStr = t.toLocaleTimeString([],{hour:'2-digit', minute:'2-digit'});
+            const displayDate = t.toLocaleDateString('pt-BR');
             const cliente = a.client || "Cliente";
             const servico = a.service || "Serviço";
             const rawPhone = a.phone ? a.phone.replace(/\D/g, '') : '';
@@ -163,16 +167,48 @@ socket.on('appointments_update', apps => {
             const statusClass = status.toLowerCase();
             const waLink = rawPhone ? `https://wa.me/${rawPhone}` : '#';
 
-            html += `<div class="schedule-card status-${statusClass}"><div class="time-col"><div class="time-hour">${timeStr.split(':')[0]}</div><div class="time-ampm">:${timeStr.split(':')[1]}</div></div><div class="info-col"><div class="client-row"><div class="client-name">${cliente}</div><div class="status-badge ${statusClass}">${status}</div></div><div class="details-row"><div class="detail-item"><span class="material-icons-round" style="font-size:16px; color:var(--primary);">content_cut</span> ${servico}</div><div class="detail-item"><span class="material-icons-round" style="font-size:16px; color:var(--text-muted);">phone</span> ${displayPhone}</div></div></div><div class="action-col">${rawPhone ? `<a href="${waLink}" target="_blank" class="btn-action btn-whatsapp" title="Chamar"><span class="material-icons-round">chat</span></a>` : ''}<button class="btn-action btn-delete" onclick="delApp('${a.id}')"><span class="material-icons-round">delete</span></button></div></div>`;
+            html += `
+            <div class="schedule-card status-${statusClass}">
+                <div class="time-col">
+                    <div class="time-hour">${timeStr.split(':')[0]}</div>
+                    <div class="time-ampm">:${timeStr.split(':')[1]}</div>
+                </div>
+                <div class="info-col">
+                    <div class="client-row"><div class="client-name">${cliente}</div><div class="status-badge ${statusClass}">${status}</div></div>
+                    <div class="details-row"><div class="detail-item"><span class="material-icons-round" style="font-size:16px; color:var(--primary);">content_cut</span> ${servico}</div><div class="detail-item"><span class="material-icons-round" style="font-size:16px; color:var(--text-muted);">phone</span> ${displayPhone}</div></div>
+                </div>
+                <div class="action-col">
+                    ${rawPhone && status !== 'concluido' ? `<button class="btn-action btn-reminder" onclick="sendReminder('${a.id}', '${rawPhone}', '${cliente}', '${displayDate}', '${timeStr}')" title="Enviar Lembrete"><span class="material-icons-round">notifications</span></button>` : ''}
+                    
+                    ${rawPhone ? `<a href="${waLink}" target="_blank" class="btn-action btn-whatsapp" title="Chamar"><span class="material-icons-round">chat</span></a>` : ''}
+                    
+                    <button class="btn-action btn-delete" onclick="delApp('${a.id}')"><span class="material-icons-round">delete</span></button>
+                </div>
+            </div>`;
         });
         html += `</div>`;
         els.agenda.innerHTML += html;
     });
 });
 
+function sendReminder(id, phone, client, date, time) {
+    if(confirm(`Enviar lembrete para ${client}?`)) {
+        socket.emit('send_reminder', { id, phone, client, date, time });
+    }
+}
+
+socket.on('operation_success', msg => {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+});
+
+socket.on('operation_fail', msg => alert(msg));
+
 function delApp(id) { if(confirm('Cancelar agendamento?')) socket.emit('delete_appointment', id); }
 
-// CONFIGS
+// --- CONFIGS ---
 const SPECIAL_KEYS = ['config_inicio', 'config_fim', 'config_duracao', 'config_prompt', 'config_numeros'];
 
 socket.on('knowledge_update', d => {

@@ -15,7 +15,6 @@ function createWhatsappClient(onMessageCallback, io) {
     console.log('📲 QR Code recebido (Terminal)');
     qrcode.generate(qr, { small: true });
     
-    // Envia QR Code para o site
     if (io) {
         try {
             const url = await QRCodeImage.toDataURL(qr);
@@ -38,15 +37,11 @@ function createWhatsappClient(onMessageCallback, io) {
       if (io) io.emit('disconnected');
   });
 
-  // --- MODO ESPIÃO: Intercepta mensagens para o painel ---
   client.on('message', msg => {
       if (io) {
           try {
               const number = msg.from.replace('@c.us', '');
-              // Pega os primeiros 50 caracteres para não poluir o log
               const preview = msg.body.length > 50 ? msg.body.substring(0, 50) + '...' : msg.body;
-              
-              // Só envia se tiver texto (ignora estatus de 'digitando' etc)
               if(msg.body) {
                   io.emit('real_log', {
                       type: 'incoming',
@@ -58,8 +53,8 @@ function createWhatsappClient(onMessageCallback, io) {
           }
       }
 
-      // Continua o fluxo normal do bot (responder com IA)
-      onMessageCallback(client, msg).catch(err => console.error(err));
+      // --- MUDANÇA: Passamos o IO para o handler ---
+      onMessageCallback(client, msg, io).catch(err => console.error(err));
   });
 
   client.initialize();

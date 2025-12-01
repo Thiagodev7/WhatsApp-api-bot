@@ -1,12 +1,11 @@
-// ... (imports iguais aos anteriores)
 const { generateReply } = require('../services/geminiService');
-const { createAppointment, getAvailableSlots } = require('../services/localCalendarService');
+const { createAppointment, getAvailableSlots, findPendingAppointment, updateAppointmentStatus, getAllAppointments } = require('../services/localCalendarService');
 const { logMessage } = require('../utils/logger');
 const { addResposta, getRespostas } = require('../utils/respostaManager');
 const { getHistory, saveHistory, loadMemory } = require('../utils/chatMemoryManager');
 const { getState, setState, deleteState, loadState } = require('../utils/bookingStateManager');
 
-const MAX_HISTORY = 50;
+const MAX_HISTORY = 15;
 let dbCache = null;
 let lastDbUpdate = 0;
 
@@ -34,13 +33,40 @@ async function replyAndLog(message, text) {
 function normalize(text) { return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
 function cleanNumber(num) { return num.replace(/\D/g, ''); }
 
-async function handleIncomingMessage(client, message) {
+function isConfirmation(text) {
+    const words = ['sim', 'confirmo', 'confirmado', 'ok', 'pode ser', 'ta', 'tá', 'isso', 'claro', 'pode'];
+    const clean = normalize(text);
+    return words.some(w => clean.includes(w));
+}
+
+async function handleIncomingMessage(client, message, io) {
   try {
     const from = message.from;
     if (message.isStatus || from.endsWith('@g.us') || message.fromMe) return;
 
-    const text = (message.body || '').trim();
-    if (!text) return;
+    // --- LÓGICA DE ÁUDIO ---
+    let mediaData = null;
+    let text = (message.body || '').trim();
+
+    // Verifica se é mensagem de voz/áudio
+    if (message.hasMedia) {
+        try {
+            const media = await message.downloadMedia();
+            if (media && (media.mimetype.startsWith('audio') || media.mimetype.includes('ogg'))) {
+                mediaData = {
+                    mimetype: media.mimetype,
+                    data: media.data // Base64
+                };
+                text = "[Áudio Recebido]"; // Placeholder para o log e histórico
+                console.log('🎤 Áudio recebido de', from);
+            }
+        } catch (err) {
+            console.error('Erro ao baixar mídia:', err);
+        }
+    }
+
+    // Se não tem texto nem áudio, ignora (ex: imagem sem legenda)
+    if (!text && !mediaData) return;
 
     const phone = cleanNumber(from); 
     
@@ -66,9 +92,10 @@ async function handleIncomingMessage(client, message) {
     logMessage('RECEBIDO', from, text);
     usage.messages++;
 
-    // ADMIN
     const norm = normalize(text);
-    if (norm.startsWith('!add ')) {
+
+    // ADMIN (Só processa comandos se for texto puro)
+    if (!mediaData && norm.startsWith('!add ')) {
         const p = text.substring(5).split('=');
         if (p.length===2) { 
             await addResposta(p[0].trim(), p[1].trim()); 
@@ -77,13 +104,31 @@ async function handleIncomingMessage(client, message) {
         return;
     }
 
-    // 3. IA
-    const history = getHistory(phone);
-    history.push({ role: 'user', content: text });
-    
-    let reply = await generateReply(history, phone);
+    // 3. CONFIRMAÇÃO (Só funciona com texto por enquanto)
+    const pendingApp = await findPendingAppointment(phone);
+    if (!mediaData && pendingApp && isConfirmation(text)) {
+        await updateAppointmentStatus(pendingApp.id, 'confirmado');
+        if (io) io.emit('appointments_update', await getAllAppointments());
 
-    // 4. JSON Action
+        const confirmMsg = `Maravilha! Seu horário está SUPER confirmado! ✅\nTe esperamos dia ${new Date(pendingApp.start).toLocaleDateString('pt-BR')} às ${new Date(pendingApp.start).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}.`;
+        
+        const history = getHistory(phone);
+        history.push({ role: 'user', content: text });
+        history.push({ role: 'assistant', content: confirmMsg });
+        saveHistory(phone, history.slice(-MAX_HISTORY));
+        
+        await replyAndLog(message, confirmMsg);
+        return;
+    }
+
+    // 4. IA (Processa Texto OU Áudio)
+    const history = getHistory(phone);
+    history.push({ role: 'user', content: text }); // Salva "[Áudio Recebido]" no histórico visual
+    
+    // Passa o audioData para o serviço
+    let reply = await generateReply(history, phone, mediaData);
+
+    // 5. JSON Action
     try {
         if (reply.trim().startsWith('{') && reply.trim().endsWith('}')) {
             const command = JSON.parse(reply);
@@ -99,20 +144,22 @@ async function handleIncomingMessage(client, message) {
                      const horariosLivres = slots.length > 0 ? slots.join(', ') : "Sem vagas hoje.";
                      const sysMsg = `Sistema: Horário ${command.hora} indisponível. Livres: [ ${horariosLivres} ].`;
                      history.push({ role: 'user', content: sysMsg });
-                     reply = await generateReply(history, phone); 
+                     reply = await generateReply(history, phone); // Tenta de novo sem áudio dessa vez
                 } else {
                     const endIso = new Date(new Date(startIso).getTime() + duration*60000).toISOString();
                     
-                    // --- SALVANDO CORRETAMENTE ---
                     await createAppointment({
-                        clientName: command.nome,     // Nome extraído pela IA
-                        serviceName: command.servico, // Serviço extraído pela IA
-                        clientPhone: phone,           // Número do WhatsApp
+                        clientName: command.nome,
+                        serviceName: command.servico,
+                        clientPhone: phone, 
+                        status: 'agendado', 
                         startDateTime: startIso, 
                         endDateTime: endIso
                     });
+                    
+                    if (io) io.emit('appointments_update', await getAllAppointments());
 
-                    const confirm = `✅ *Agendamento Realizado!* \n\n👤 ${command.nome}\n🗓️ ${new Date(startIso).toLocaleDateString('pt-BR')} às ${command.hora}\n✂️ ${command.servico}\n\nStatus: Agendado`;
+                    const confirm = `✅ *Agendado!* \n🗓️ ${new Date(startIso).toLocaleDateString('pt-BR')} às ${command.hora}\n✂️ ${command.servico}`;
                     history.push({ role: 'assistant', content: confirm });
                     saveHistory(phone, history.slice(-MAX_HISTORY));
                     await replyAndLog(message, confirm);
@@ -124,7 +171,7 @@ async function handleIncomingMessage(client, message) {
         console.error("Erro JSON IA:", jsonError);
     }
 
-    // 5. Resposta Texto
+    // 6. Resposta Texto Normal
     history.push({ role: 'assistant', content: reply });
     saveHistory(phone, history.slice(-MAX_HISTORY));
     await replyAndLog(message, reply);
