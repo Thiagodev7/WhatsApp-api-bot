@@ -1,20 +1,21 @@
+// src/config/database.js
 const { Pool } = require('pg');
-require('./env'); 
+require('./env');
 
-// Cria a conexão usando a URL do seu .env
+/**
+ * Pool de conexões PostgreSQL.
+ * Gerencia múltiplas conexões simultâneas de forma eficiente.
+ */
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  // Se for usar na nuvem (VPS/Render) com SSL, descomente a linha abaixo:
-  // ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+  max: 20, // Máximo de clientes no pool
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
 });
 
-pool.on('connect', () => {
-  // Conexão bem sucedida silenciosa
-});
-
-pool.on('error', (err) => {
-  console.error('❌ Erro inesperado no cliente do Banco de Dados', err);
-  process.exit(-1);
+pool.on('error', (err, client) => {
+  console.error('❌ Erro inesperado no pool do PostgreSQL', err);
+  // Não sair do processo em produção, apenas logar
 });
 
 module.exports = {
